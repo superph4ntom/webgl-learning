@@ -1,0 +1,11 @@
+import { useLocale } from '@/hooks/localizer';
+import styles from './{{category}}-{{dashCase name}}.module.scss';
+
+export default function {{pascalCase category}}{{pascalCase name}}() {
+  const t = useLocale();
+  return (
+    <div className={styles.{{camelCase name}}Container}>
+      <h1>{t('hello')} {{pascalCase name}}</h1>
+    </div>
+  );
+}

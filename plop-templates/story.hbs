@@ -1,0 +1,21 @@
+import React from 'react';
+import { StoryFn, Meta } from '@storybook/react';
+import {{pascalCase category}}{{pascalCase name}} from './{{category}}-{{dashCase name}}';
+
+export default {
+  title: '{{pascalCase category}}s/{{pascalCase name}}',
+  argTypes: {
+    isDarkMode: { control: 'boolean' },
+  },
+} as Meta;
+
+const Template: StoryFn = ({ darkMode }) => (
+  <div className={darkMode ? 'is-dark-mode' : 'is-light-mode'}>
+    <{{pascalCase category}}{{pascalCase name}} />
+  </div>
+);
+
+export const Default = Template.bind({});
+Default.args = {
+  isDarkMode: false,
+};
