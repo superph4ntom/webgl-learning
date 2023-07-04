@@ -15,13 +15,17 @@ export default function OrganismFirstR3FApplication() {
   console.log(camera, gl);
 
   useFrame((state, delta) => {
+    const angle = state.clock.elapsedTime;
+    state.camera.position.x = Math.sin(angle);
+
     cubeRef.current.rotation.y += delta;
-    groupRef.current.rotation.y += delta;
+
+    // groupRef.current.rotation.y += delta;
   });
 
   return (
     <>
-      <orbitControls args={[camera, gl.domElement]} />
+      {/* <orbitControls args={[camera, gl.domElement]} /> */}
 
       <directionalLight position={[1, 2, 3]} intensity={1.5} />
       <ambientLight intensity={0.5} />

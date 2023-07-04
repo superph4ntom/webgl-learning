@@ -4,6 +4,16 @@ import OrganismFirstR3FApplication from '@/organisms/organism-first-r3-f-applica
 import styles from './index.module.scss';
 
 export default function Home() {
+  const cameraSettings = {
+    OrganismFirstR3FApplication: {
+      fov: 45,
+      zoom: 100,
+      near: 0.1,
+      far: 200,
+      position: [3, 2, 6] as const,
+    },
+  };
+
   return (
     <>
       <Head>
@@ -15,6 +25,7 @@ export default function Home() {
       <div>
         <Canvas
           style={{ position: 'relative', width: '100vw', height: '100vh' }}
+          camera={cameraSettings.OrganismFirstR3FApplication}
         >
           <OrganismFirstR3FApplication />
         </Canvas>
