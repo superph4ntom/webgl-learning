@@ -1,0 +1,15 @@
+.r3fDreiContainer {
+  display: block;
+}
+
+.label > div {
+  font-family: Helvetica, Arial;
+  position: absolute;
+  background-color: #000;
+  color: white;
+  padding: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  border-radius: 30px;
+  user-select: none;
+}
