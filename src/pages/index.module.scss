@@ -1,6 +1,5 @@
 .main {
   display: block;
-  background-color: var(--background-light);
   margin: 0;
   height: 100vh;
 
@@ -12,4 +11,8 @@
     height: 100vh;
     overflow: hidden;
   }
+}
+
+.backgroundSky {
+  background-color: lightskyblue;
 }

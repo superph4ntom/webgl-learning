@@ -2,7 +2,7 @@ import { MutableRefObject, useRef } from 'react';
 import { useFrame, useThree, extend } from '@react-three/fiber';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import CustomObject from '@/utils/components/CustomObject';
-import styles from './organism-first-r3-f-application.module.scss';
+// import styles from './organism-first-r3-f-application.module.scss';
 
 extend({ OrbitControls });
 
@@ -15,8 +15,10 @@ export default function OrganismFirstR3FApplication() {
   console.log(camera, gl);
 
   useFrame((state, delta) => {
-    const angle = state.clock.elapsedTime;
-    state.camera.position.x = Math.sin(angle);
+    // const angle = state.clock.elapsedTime;
+    // state.camera.position.x = Math.sin(angle) * 8;
+    // state.camera.position.z = Math.sin(angle) * 8;
+    // state.camera.lookAt(0, 0, 0);
 
     cubeRef.current.rotation.y += delta;
 
@@ -25,7 +27,7 @@ export default function OrganismFirstR3FApplication() {
 
   return (
     <>
-      {/* <orbitControls args={[camera, gl.domElement]} /> */}
+      <orbitControls args={[camera, gl.domElement]} />
 
       <directionalLight position={[1, 2, 3]} intensity={1.5} />
       <ambientLight intensity={0.5} />
@@ -45,7 +47,7 @@ export default function OrganismFirstR3FApplication() {
           <meshStandardMaterial color="mediumpurple" />
         </mesh>
       </group>
-      <mesh position-y={-1} rotation-x={-Math.PI * 0.5} scale={10}>
+      <mesh position-y={-1} rotation-x={-Math.PI * 10.5} scale={10}>
         <planeGeometry />
         <meshBasicMaterial color="greenyellow" />
       </mesh>
