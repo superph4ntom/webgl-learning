@@ -1,9 +1,12 @@
 import { useRef, MutableRefObject } from 'react';
 import {
+  Text,
   Html,
+  Float,
   PivotControls,
   TransformControls,
   OrbitControls,
+  MeshReflectorMaterial,
 } from '@react-three/drei';
 import styles from './organism-r3f-drei.module.scss';
 
@@ -13,7 +16,6 @@ export default function OrganismR3fDrei() {
   return (
     <>
       <OrbitControls makeDefault />
-
       <directionalLight position={[1, 2, 3]} intensity={1.5} />
       <ambientLight intensity={0.5} />
 
@@ -40,16 +42,38 @@ export default function OrganismR3fDrei() {
             </Html>
           </mesh>
         </PivotControls>
+
         <mesh ref={cubeRef} scale={1.5} position-x={2}>
           <boxGeometry />
           <meshStandardMaterial color="mediumpurple" />
         </mesh>
         <TransformControls object={cubeRef} mode="translate" />
       </group>
+
       <mesh position-y={-1} rotation-x={-Math.PI * 10.5} scale={10}>
         <planeGeometry />
-        <meshBasicMaterial color="greenyellow" />
+        {/* <meshBasicMaterial color="greenyellow" /> */}
+        <MeshReflectorMaterial
+          resolution={512}
+          blur={[1000, 1000]}
+          mixBlur={1}
+          mirror={0.75}
+          color="greenyellow"
+        />
       </mesh>
+
+      <Float speed={5} floatIntensity={2}>
+        <Text
+          font="/fonts/silkscreen-regular.ttf"
+          fontSize={1}
+          color="salmon"
+          position-y={2}
+          textAlign="center"
+        >
+          Hi R3F DREI
+          <meshNormalMaterial />
+        </Text>
+      </Float>
     </>
   );
 }
