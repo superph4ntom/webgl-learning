@@ -7,16 +7,100 @@ import {
   TransformControls,
   OrbitControls,
   MeshReflectorMaterial,
+  useHelper,
+  BakeShadows,
+  SoftShadows,
+  AccumulativeShadows,
+  RandomizedLight,
 } from '@react-three/drei';
+import { DirectionalLightHelper } from 'three';
+import { useControls, button } from 'leva';
+import { Perf } from 'r3f-perf';
 import styles from './organism-r3f-drei.module.scss';
+import { useFrame } from '@react-three/fiber';
 
 export default function OrganismR3fDrei() {
   const cubeRef: MutableRefObject<any> = useRef();
   const sphereRef: MutableRefObject<any> = useRef();
+  const directionalLightRef: MutableRefObject<any> = useRef();
+
+  useHelper(directionalLightRef, DirectionalLightHelper, 1);
+
+  useFrame((state, delta) => {
+    cubeRef.current.rotation.y += delta;
+  });
+
+  const sphereOptions = useControls('sphere', {
+    position: {
+      value: { x: -2, y: 0 },
+      step: 0.01,
+      joystick: 'invertY',
+    },
+    color: '#ff0000',
+    visible: true,
+    myInterval: {
+      min: 0,
+      max: 10,
+      value: [4, 5],
+    },
+    clickMe: button(() => {
+      console.log('ok');
+    }),
+    choice: { options: ['a', 'b', 'c'] },
+  });
+
+  const cubeOptions = useControls('cube', {
+    scale: {
+      value: 1.5,
+      step: 0.01,
+      min: 0,
+      max: 5,
+    },
+  });
+
   return (
     <>
+      {/* <BakeShadows /> */}
+      <SoftShadows
+        frustum={3.75}
+        size={50}
+        near={9.5}
+        samples={17}
+        rings={11}
+      />
+      <Perf position="top-left" />
       <OrbitControls makeDefault />
-      <directionalLight position={[1, 2, 3]} intensity={1.5} />
+      <AccumulativeShadows
+        position={[0, -0.99, 0]}
+        scale={10}
+        color="#316d39"
+        opacity={0.8}
+        frames={Infinity}
+        temporal
+        blend={100}
+      >
+        <RandomizedLight
+          amount={8}
+          radius={1}
+          ambient={0.5}
+          intensity={1}
+          position={[1, 2, 3]}
+          bias={0.001}
+        />
+      </AccumulativeShadows>
+      <directionalLight
+        ref={directionalLightRef}
+        castShadow
+        position={[1, 2, 3]}
+        intensity={1.5}
+        shadow-mapSize={[1024, 1024]}
+        shadow-camera-near={1}
+        shadow-camera-far={10}
+        shadow-camera-top={5}
+        shadow-camera-right={5}
+        shadow-camera-bottom={-5}
+        shadow-camera-left={-5}
+      />
       <ambientLight intensity={0.5} />
 
       <group>
@@ -28,9 +112,14 @@ export default function OrganismR3fDrei() {
           scale={100}
           fixed={true}
         >
-          <mesh ref={sphereRef} position-x={-2}>
+          <mesh
+            ref={sphereRef}
+            position={[sphereOptions.position.x, sphereOptions.position.y, 0]}
+            visible={sphereOptions.visible}
+            castShadow
+          >
             <sphereGeometry />
-            <meshStandardMaterial color="orange" />
+            <meshStandardMaterial color={sphereOptions.color} />
             <Html
               position={[1, 1, 0]}
               wrapperClass={styles.label}
@@ -43,14 +132,19 @@ export default function OrganismR3fDrei() {
           </mesh>
         </PivotControls>
 
-        <mesh ref={cubeRef} scale={1.5} position-x={2}>
+        <mesh ref={cubeRef} scale={cubeOptions.scale} position-x={2} castShadow>
           <boxGeometry />
           <meshStandardMaterial color="mediumpurple" />
         </mesh>
         <TransformControls object={cubeRef} mode="translate" />
       </group>
 
-      <mesh position-y={-1} rotation-x={-Math.PI * 10.5} scale={10}>
+      <mesh
+        receiveShadow
+        position-y={-1}
+        rotation-x={-Math.PI * 10.5}
+        scale={10}
+      >
         <planeGeometry />
         {/* <meshBasicMaterial color="greenyellow" /> */}
         <MeshReflectorMaterial

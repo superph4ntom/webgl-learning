@@ -4,6 +4,8 @@ import { ACESFilmicToneMapping, LinearSRGBColorSpace } from 'three';
 import OrganismFirstR3FApplication from '@/organisms/organism-first-r3-f-application/organism-first-r3-f-application';
 import OrganismR3fDrei from '@/organisms/organism-r3f-drei/organism-r3f-drei';
 import styles from './index.module.scss';
+import { Leva } from 'leva';
+import { Color } from 'three';
 
 export default function Home() {
   const cameraSettings = {
@@ -32,6 +34,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div className={styles.backgroundSky}>
+        <Leva collapsed />
         <Canvas
           dpr={[1, 2]}
           gl={{
@@ -39,9 +42,11 @@ export default function Home() {
             // toneMapping: ACESFilmicToneMapping,
             // outputColorSpace: LinearSRGBColorSpace,
           }}
+          shadows
           camera={cameraSettings.OrganismR3fDrei}
           style={{ position: 'relative', width: '100vw', height: '100vh' }}
         >
+          <color args={['ivory']} attach="background" />
           {/* <OrganismFirstR3FApplication /> */}
           <OrganismR3fDrei />
         </Canvas>
