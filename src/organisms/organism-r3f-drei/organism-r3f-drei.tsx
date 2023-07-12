@@ -12,6 +12,7 @@ import {
   SoftShadows,
   AccumulativeShadows,
   RandomizedLight,
+  Sky,
 } from '@react-three/drei';
 import { DirectionalLightHelper } from 'three';
 import { useControls, button } from 'leva';
@@ -58,6 +59,10 @@ export default function OrganismR3fDrei() {
     },
   });
 
+  const { sunPosition }: any = useControls('sky', {
+    sunPosition: { value: [1, 2, 3] },
+  });
+
   return (
     <>
       {/* <BakeShadows /> */}
@@ -70,7 +75,7 @@ export default function OrganismR3fDrei() {
       />
       <Perf position="top-left" />
       <OrbitControls makeDefault />
-      <AccumulativeShadows
+      {/* <AccumulativeShadows
         position={[0, -0.99, 0]}
         scale={10}
         color="#316d39"
@@ -87,11 +92,11 @@ export default function OrganismR3fDrei() {
           position={[1, 2, 3]}
           bias={0.001}
         />
-      </AccumulativeShadows>
+      </AccumulativeShadows> */}
       <directionalLight
         ref={directionalLightRef}
         castShadow
-        position={[1, 2, 3]}
+        position={sunPosition}
         intensity={1.5}
         shadow-mapSize={[1024, 1024]}
         shadow-camera-near={1}
@@ -102,7 +107,7 @@ export default function OrganismR3fDrei() {
         shadow-camera-left={-5}
       />
       <ambientLight intensity={0.5} />
-
+      <Sky sunPosition={sunPosition} />
       <group>
         <PivotControls
           anchor={[0, 0, 0]}

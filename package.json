@@ -22,10 +22,11 @@
     "leva": "^0.9.35",
     "next": "13.2.4",
     "next-i18next": "^13.2.2",
-    "r3f-perf": "^6.5.0",
+    "r3f-perf": "^6.7.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-i18next": "^12.2.0",
+    "react-three-fiber": "^6.0.13",
     "three": "^0.153.0"
   },
   "devDependencies": {

@@ -25,6 +25,8 @@ export default function Home() {
     },
   };
 
+  new Color('red');
+
   return (
     <>
       <Head>
@@ -42,11 +44,10 @@ export default function Home() {
             // toneMapping: ACESFilmicToneMapping,
             // outputColorSpace: LinearSRGBColorSpace,
           }}
-          shadows
           camera={cameraSettings.OrganismR3fDrei}
           style={{ position: 'relative', width: '100vw', height: '100vh' }}
         >
-          <color args={['ivory']} attach="background" />
+          <color args={['#ff0000']} attach="background" />
           {/* <OrganismFirstR3FApplication /> */}
           <OrganismR3fDrei />
         </Canvas>
