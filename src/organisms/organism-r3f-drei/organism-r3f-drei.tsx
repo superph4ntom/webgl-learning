@@ -13,6 +13,7 @@ import {
   AccumulativeShadows,
   RandomizedLight,
   Sky,
+  Environment,
 } from '@react-three/drei';
 import { DirectionalLightHelper } from 'three';
 import { useControls, button } from 'leva';
@@ -63,8 +64,24 @@ export default function OrganismR3fDrei() {
     sunPosition: { value: [1, 2, 3] },
   });
 
+  const { envMapIntensity } = useControls('environment map', {
+    envMapIntensity: { value: 3.5, min: 0, max: 12 },
+  });
+
   return (
     <>
+      <Environment
+        background
+        // files={[
+        //   '/environmentMaps/2/px.jpg',
+        //   '/environmentMaps/2/nx.jpg',
+        //   '/environmentMaps/2/py.jpg',
+        //   '/environmentMaps/2/ny.jpg',
+        //   '/environmentMaps/2/pz.jpg',
+        //   '/environmentMaps/2/nz.jpg',
+        // ]}
+        files={'./environmentMaps/the_sky_is_on_fire_2k.hdr'}
+      />
       {/* <BakeShadows /> */}
       <SoftShadows
         frustum={3.75}
@@ -73,8 +90,10 @@ export default function OrganismR3fDrei() {
         samples={17}
         rings={11}
       />
+
       <Perf position="top-left" />
       <OrbitControls makeDefault />
+
       {/* <AccumulativeShadows
         position={[0, -0.99, 0]}
         scale={10}
@@ -106,8 +125,10 @@ export default function OrganismR3fDrei() {
         shadow-camera-bottom={-5}
         shadow-camera-left={-5}
       />
+
       <ambientLight intensity={0.5} />
-      <Sky sunPosition={sunPosition} />
+      {/* <Sky sunPosition={sunPosition} /> */}
+
       <group>
         <PivotControls
           anchor={[0, 0, 0]}
@@ -122,9 +143,13 @@ export default function OrganismR3fDrei() {
             position={[sphereOptions.position.x, sphereOptions.position.y, 0]}
             visible={sphereOptions.visible}
             castShadow
+            envMapIntensity={envMapIntensity}
           >
             <sphereGeometry />
-            <meshStandardMaterial color={sphereOptions.color} />
+            <meshStandardMaterial
+              color={sphereOptions.color}
+              envMapIntensity={envMapIntensity}
+            />
             <Html
               position={[1, 1, 0]}
               wrapperClass={styles.label}
@@ -139,7 +164,10 @@ export default function OrganismR3fDrei() {
 
         <mesh ref={cubeRef} scale={cubeOptions.scale} position-x={2} castShadow>
           <boxGeometry />
-          <meshStandardMaterial color="mediumpurple" />
+          <meshStandardMaterial
+            color="mediumpurple"
+            envMapIntensity={envMapIntensity}
+          />
         </mesh>
         <TransformControls object={cubeRef} mode="translate" />
       </group>
