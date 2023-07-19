@@ -13,6 +13,7 @@ import {
   AccumulativeShadows,
   RandomizedLight,
   Sky,
+  Lightformer,
   Environment,
 } from '@react-three/drei';
 import { DirectionalLightHelper } from 'three';
@@ -20,6 +21,7 @@ import { useControls, button } from 'leva';
 import { Perf } from 'r3f-perf';
 import styles from './organism-r3f-drei.module.scss';
 import { useFrame } from '@react-three/fiber';
+import { attach } from '@react-three/fiber/dist/declarations/src/core/utils';
 
 export default function OrganismR3fDrei() {
   const cubeRef: MutableRefObject<any> = useRef();
@@ -80,8 +82,22 @@ export default function OrganismR3fDrei() {
         //   '/environmentMaps/2/pz.jpg',
         //   '/environmentMaps/2/nz.jpg',
         // ]}
-        files={'./environmentMaps/the_sky_is_on_fire_2k.hdr'}
-      />
+        // files={'./environmentMaps/the_sky_is_on_fire_2k.hdr'}
+        preset="sunset"
+      >
+        <color args={['#000000']} attach="background" />
+        <Lightformer
+          position-z={-5}
+          scale={10}
+          color={['red']}
+          intensity={10}
+        />
+        <mesh position-z={-5} scale={10}>
+          <planeGeometry />
+          <meshBasicMaterial color={[2, 0, 0]} />
+        </mesh>
+      </Environment>
+
       {/* <BakeShadows /> */}
       <SoftShadows
         frustum={3.75}
