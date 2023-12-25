@@ -7,32 +7,39 @@ import {
   useGLTF,
   useTexture,
 } from "@react-three/drei";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, RootState, useFrame } from "@react-three/fiber";
 import { easing } from "maath";
-import { useRef } from "react";
+import { ReactNode, RefObject, useRef } from "react";
+import type { BufferGeometry, Color, Mesh, MeshLambertMaterial } from "three";
+import { Euler } from "three";
 import { useSnapshot } from "valtio";
 import "./index.css";
 import { state } from "./store";
 
-function Scene({ position = [0, 0, 2.5], fov = 25 }) {
+function Scene() {
+  const rootElement: HTMLElement | null = document.getElementById("root");
   return (
-    <Canvas
-      shadows
-      camera={{ position, fov }}
-      gl={{ preserveDrawingBuffer: true }}
-      eventSource={document.getElementById("root")}
-      eventPrefix="client"
-    >
-      <ambientLight intensity={0.5} />
-      <Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/potsdamer_platz_1k.hdr" />
+    <>
+      {rootElement && (
+        <Canvas
+          shadows
+          camera={{ position: [0, 0, 2.5], fov: 25 }}
+          gl={{ preserveDrawingBuffer: true }}
+          eventSource={rootElement}
+          eventPrefix="client"
+        >
+          <ambientLight intensity={0.5} />
+          <Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/potsdamer_platz_1k.hdr" />
 
-      <CameraRig>
-        <Backdrop />
-        <Center>
-          <Shirt />
-        </Center>
-      </CameraRig>
-    </Canvas>
+          <CameraRig>
+            <Backdrop />
+            <Center>
+              <Shirt />
+            </Center>
+          </CameraRig>
+        </Canvas>
+      )}
+    </>
   );
 }
 
@@ -44,13 +51,21 @@ function Shirt() {
   const { nodes, materials } = useGLTF("/shirt_baked_collapsed.glb");
 
   useFrame((state, delta) => {
-    easing.dampC(materials.lambert1.color, snap.selectedColor, 0.25, delta);
+    easing.dampC(
+      (materials.lambert1 as MeshLambertMaterial).color,
+      snap.selectedColor,
+      0.25,
+      delta
+    );
   });
+
+  const shirtMesh = nodes.T_Shirt_male as Mesh;
+  const shirtGeometry = shirtMesh.geometry as BufferGeometry;
 
   return (
     <mesh
       castShadow
-      geometry={nodes.T_Shirt_male.geometry}
+      geometry={shirtGeometry}
       material={materials.lambert1}
       material-roughness={1}
       dispose={null}
@@ -59,27 +74,33 @@ function Shirt() {
         position={[0, 0.04, 0.15]}
         rotation={[0, 0, 0]}
         scale={0.15}
-        opacity={0.7}
         map={texture}
       />
     </mesh>
   );
 }
 
-function Backdrop() {
-  const shadows = useRef();
+type ShadowsRef = {
+  getMesh: () => { material: { color: Color } };
+};
 
-  useFrame((state, delta) =>
-    easing.dampC(
-      shadows.current.getMesh().material.color,
-      state.selectedColor,
-      0.25,
-      delta
-    )
-  );
+function Backdrop() {
+  const shadows: RefObject<ShadowsRef> = useRef<ShadowsRef>(null);
+
+  useFrame((_frameState: RootState, delta: number) => {
+    if (shadows.current) {
+      easing.dampC(
+        shadows.current.getMesh().material.color,
+        state.selectedColor,
+        0.25,
+        delta
+      );
+    }
+  });
 
   return (
     <AccumulativeShadows
+      // @ts-expect-error: Ignore TypeScript error for the following line
       ref={shadows}
       temporal
       frames={60}
@@ -106,8 +127,12 @@ function Backdrop() {
   );
 }
 
-function CameraRig({ children }) {
-  const group = useRef();
+type CameraRigProps = {
+  children: ReactNode;
+};
+
+function CameraRig({ children }: CameraRigProps) {
+  const group = useRef({ rotation: new Euler() });
 
   useFrame((state, delta) => {
     easing.damp3(state.camera.position, [0, 0, 2], 0.25, delta);
@@ -118,7 +143,14 @@ function CameraRig({ children }) {
       delta
     );
   });
-  return <group ref={group}>{children}</group>;
+  return (
+    <group
+      // @ts-expect-error: Ignore TypeScript error for the following line
+      ref={group}
+    >
+      {children}
+    </group>
+  );
 }
 
 useGLTF.preload("/shirt_baked_collapsed.glb");

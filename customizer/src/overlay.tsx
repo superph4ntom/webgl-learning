@@ -9,24 +9,26 @@ import {
 import { useSnapshot } from "valtio";
 import { state } from "./store";
 
+const transition = { type: "spring", duration: 0.8 };
+
+const headerAnimation = {
+  initial: { opacity: 0, y: -120 },
+  animate: { opacity: 1, y: 0 },
+  transition: { type: "spring", duration: 1.8, delay: 1 },
+};
+
+const sectionAnimation = {
+  initial: { x: -100, opacity: 0, transition: { ...transition, delay: 0.5 } },
+  animate: { x: 0, opacity: 1, transition: { ...transition, delay: 0 } },
+  exit: { x: -100, opacity: 0, transition: { ...transition, delay: 0 } },
+};
+
 export default function Overlay() {
   const snap = useSnapshot(state);
 
-  const transition = { type: "spring", duration: 0.8 };
-
-  const config = {
-    initial: { x: -100, opacity: 0, transition: { ...transition, delay: 0.5 } },
-    animate: { x: 0, opacity: 1, transition: { ...transition, delay: 0 } },
-    exit: { x: -100, opacity: 0, transition: { ...transition, delay: 0 } },
-  };
-
   return (
     <div className="container">
-      <motion.header
-        initial={{ opacity: 0, y: -120 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", duration: 1.8, delay: 1 }}
-      >
+      <motion.header {...headerAnimation}>
         <Logo width="40" height="40" />
         <div>
           <AiOutlineShopping size="3em" />
@@ -34,19 +36,15 @@ export default function Overlay() {
       </motion.header>
 
       <AnimatePresence>
-        {snap.intro ? (
-          <Intro key="main" config={config} />
-        ) : (
-          <Customizer key="custom" config={config} />
-        )}
+        {snap.intro ? <Intro key="main" /> : <Customizer key="custom" />}
       </AnimatePresence>
     </div>
   );
 }
 
-function Intro({ config }) {
+function Intro() {
   return (
-    <motion.section {...config}>
+    <motion.section {...sectionAnimation}>
       <div className="section--container">
         <div>
           <h1>LET'S DO IT.</h1>
@@ -71,11 +69,26 @@ function Intro({ config }) {
   );
 }
 
-function Customizer({ config }) {
+function Customizer() {
   const snap = useSnapshot(state);
 
+  const downloadCanvas = () => {
+    const canvas = document.querySelector("canvas");
+    if (canvas) {
+      const link = document.createElement("a");
+      link.setAttribute("download", "canvas.png");
+      link.setAttribute(
+        "href",
+        canvas.toDataURL("image/png").replace("image/png", "image/octet-stream")
+      );
+      link.click();
+    } else {
+      console.error("Canvas element not found");
+    }
+  };
+
   return (
-    <motion.section {...config}>
+    <motion.section {...sectionAnimation}>
       <div className="customizer">
         <div className="color-options">
           {snap.colors.map((color) => (
@@ -105,21 +118,9 @@ function Customizer({ config }) {
         <button
           className="share"
           style={{ background: snap.selectedColor }}
-          onClick={() => {
-            const link = document.createElement("a");
-            link.setAttribute("download", "canvas.png");
-            link.setAttribute(
-              "href",
-              document
-                .querySelector("canvas")
-                .toDataURL("image/png")
-                .replace("image/png", "image/octet-stream")
-            );
-            link.click();
-          }}
+          onClick={downloadCanvas}
         >
-          DOWNLOAD
-          <AiFillCamera size="1.3em" />
+          DOWNLOAD <AiFillCamera size="1.3em" />
         </button>
 
         <button
@@ -127,8 +128,7 @@ function Customizer({ config }) {
           style={{ background: snap.selectedColor }}
           onClick={() => (state.intro = true)}
         >
-          GO BACK
-          <AiOutlineArrowLeft size="1.3em" />
+          GO BACK <AiOutlineArrowLeft size="1.3em" />
         </button>
       </div>
     </motion.section>
