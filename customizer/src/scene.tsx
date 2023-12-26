@@ -50,7 +50,7 @@ function Shirt() {
   const texture = useTexture(`/${snap.selectedDecal}.png`);
   const { nodes, materials } = useGLTF("/shirt_baked_collapsed.glb");
 
-  useFrame((state, delta) => {
+  useFrame((_frameState, delta) => {
     easing.dampC(
       (materials.lambert1 as MeshLambertMaterial).color,
       snap.selectedColor,
@@ -73,7 +73,7 @@ function Shirt() {
       <Decal
         position={[0, 0.04, 0.15]}
         rotation={[0, 0, 0]}
-        scale={0.15}
+        scale={0.2}
         map={texture}
       />
     </mesh>
