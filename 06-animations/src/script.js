@@ -1,27 +1,47 @@
 import * as THREE from "three";
-import gsap from "gsap";
 
+/**
+ * Base
+ */
 // Canvas
 const canvas = document.querySelector("canvas.webgl");
+
+// Sizes
+const sizes = {
+  width: 800,
+  height: 600,
+};
 
 // Scene
 const scene = new THREE.Scene();
 
 // Object
-const geometry = new THREE.BoxGeometry(1, 1, 1);
-const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-const mesh = new THREE.Mesh(geometry, material);
+const mesh = new THREE.Mesh(
+  new THREE.BoxGeometry(1, 1, 1, 5, 5, 5),
+  new THREE.MeshBasicMaterial({ color: 0xff0000 })
+);
 scene.add(mesh);
 
-// Sizes
-const sizes = {
-  width: 1920,
-  height: 1200,
-};
-
 // Camera
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height);
-camera.position.z = 3;
+// const camera = new THREE.PerspectiveCamera(
+//   75,
+//   sizes.width / sizes.height,
+//   0.1,
+//   100
+// );
+const aspectRatio = sizes.width / sizes.height;
+const camera = new THREE.OrthographicCamera(
+  -1 * aspectRatio,
+  1 * aspectRatio,
+  1,
+  -1,
+  0.1,
+  100
+);
+camera.position.x = 2;
+camera.position.y = 2;
+camera.position.z = 2;
+camera.lookAt(mesh.position);
 scene.add(camera);
 
 // Renderer
@@ -30,25 +50,20 @@ const renderer = new THREE.WebGLRenderer({
 });
 renderer.setSize(sizes.width, sizes.height);
 
-// clock
-// const clock = new THREE.Clock();
+// Animate
+const clock = new THREE.Clock();
 
-gsap.to(mesh.position, { duration: 1, delay: 1, x: 2 });
-gsap.to(mesh.position, { duration: 1, delay: 2, x: 0 });
-
-// animations
 const tick = () => {
-  // clock
-  //const elapsedTime = clock.getElapsedTime();
-  //console.log("tick", elapsedTime);
+  const elapsedTime = clock.getElapsedTime();
 
-  // mesh.rotation.y += elapsedTime * Math.PI * 0.001;
-  //camera.position.y = Math.sin(elapsedTime);
-  //camera.position.x = Math.cos(elapsedTime);
-  //camera.lookAt(mesh.position);
+  // Update objects
+  mesh.rotation.y = elapsedTime;
 
-  //renderer
+  // Render
   renderer.render(scene, camera);
+
+  // Call tick again on the next frame
   window.requestAnimationFrame(tick);
 };
+
 tick();
