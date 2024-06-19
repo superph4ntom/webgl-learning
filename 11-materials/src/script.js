@@ -10,8 +10,52 @@ const canvas = document.querySelector("canvas.webgl");
 // Scene
 const scene = new THREE.Scene();
 
+/**
+ * Texture
+ */
+const textureLoader = new THREE.TextureLoader();
+const doorColorTexture = textureLoader.load("./textures/door/color.jpg");
+const doorAlphaTexture = textureLoader.load("./textures/door/alpha.png");
+const doorAmbientOcclusionTexture = textureLoader.load(
+  "./textures/door/ambientOcclusion.png"
+);
+const doorHeightTexture = textureLoader.load("./textures/door/height.png");
+const doorNormalTexture = textureLoader.load("./textures/door/normal.png");
+const doorMetalnessTexture = textureLoader.load(
+  "./textures/door/metalness.png"
+);
+const doorRoughnessTexture = textureLoader.load(
+  "./textures/door/roughness.png"
+);
+const matcapTexture = textureLoader.load("./textures/matcaps/1.png");
+const gradientTexture = textureLoader.load("./textures/gradients/3.png");
+
+doorColorTexture.colorSpace = THREE.SRGBColorSpace;
+matcapTexture.colorSpace = THREE.SRGBColorSpace;
+gradientTexture.colorSpace = THREE.SRGBColorSpace;
+
 // Objects
-const material = new THREE.MeshBasicMaterial();
+// const material = new THREE.MeshBasicMaterial();
+// material.map = doorColorTexture;
+
+// const material = new THREE.MeshNormalMaterial();
+// material.flatShading = true;
+
+// const material = new THREE.MeshMatcapMaterial();
+// material.matcap = matcapTexture;
+
+// const material = new THREE.MeshLambertMaterial();
+// const material = new THREE.MeshPhongMaterial();
+// material.shininess = 100;
+// material.specular = new THREE.Color("0x1188ff");
+// material.metalness = 0.5;
+// material.roughness = 0.5;
+
+const material = new THREE.MeshToonMaterial();
+gradientTexture.minFilter = THREE.NearestFilter;
+gradientTexture.magFilter = THREE.NearestFilter;
+gradientTexture.generateMipmaps = false;
+material.gradientMap = gradientTexture;
 
 const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16), material);
 sphere.position.x = -1.5;
@@ -26,6 +70,13 @@ const torus = new THREE.Mesh(
 torus.position.x = 1.5;
 
 scene.add(sphere, plane, torus);
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+scene.add(ambientLight);
+
+const pointLight = new THREE.PointLight(0xffffff, 30);
+pointLight.position.set(2, 3, 4);
+scene.add(pointLight);
 
 /**
  * Sizes
