@@ -1,7 +1,7 @@
+import GUI from "lil-gui";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RectAreaLightHelper } from "three/examples/jsm/helpers/RectAreaLightHelper.js";
-import GUI from "lil-gui";
 
 /**
  * Base
@@ -24,6 +24,7 @@ gui.add(ambientLight, "intensity").min(0).max(3).step(0.001);
 
 const directionalLight = new THREE.DirectionalLight(0x00fffc, 0.9);
 scene.add(directionalLight);
+gui.add(directionalLight, "intensity").min(0).max(3).step(0.001);
 
 const hemisphereLight = new THREE.HemisphereLight(0xff0000, 0x0000ff, 0.9);
 scene.add(hemisphereLight);
