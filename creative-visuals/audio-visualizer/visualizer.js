@@ -34,7 +34,7 @@ const createBall = (x, y) => ({
   isFalling: true,
   baseY: y, // Store the original Y position for resetting
   targetY: y, // Target height for the ball
-  maxJumpHeight: 150, // Max height above baseY
+  maxJumpHeight: 1450, // Max height above baseY
 });
 
 // Function to draw a ball
@@ -71,7 +71,7 @@ const balls = generateBalls();
 // Function to get frequency data
 const getFrequencyData = () => {
   analyser.getByteFrequencyData(frequencyDataArray);
-  return Array.from(frequencyDataArray);
+  return frequencyDataArray;
 };
 
 // Function to handle user interaction
@@ -109,7 +109,7 @@ const animate = () => {
       // Increase the sensitivity multiplier to make balls more responsive
       if (frequencyValue > soundThreshold) {
         ball.targetY =
-          ball.baseY - Math.min(frequencyValue * 0.4, ball.maxJumpHeight); // Increased sensitivity
+          ball.baseY - Math.min(frequencyValue * 1.9, ball.maxJumpHeight); // Increased sensitivity
       } else {
         ball.targetY = ball.baseY; // No significant sound, so target baseY
       }
