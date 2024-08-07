@@ -2,7 +2,7 @@
 
 // Initialize canvas
 const canvas = document.getElementById("myCanvas");
-const ctx = canvas.getContext("2d");
+const context = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
@@ -12,7 +12,7 @@ const audioElement = document.getElementById("audioElement");
 // Create Audio Context
 const audioContext = new AudioContext();
 const analyser = audioContext.createAnalyser();
-analyser.fftSize = 512;
+analyser.fftSize = 1024;
 
 // Create a MediaElementSourceNode from the audio element
 const source = audioContext.createMediaElementSource(audioElement);
@@ -29,39 +29,42 @@ const createBall = (x, y) => ({
   y,
   radius: 8,
   color: "white",
-  jumpForce: 0,
-  fallForce: 0.5,
+  jumpForce: 1,
+  fallForce: 1,
   isFalling: true,
   baseY: y, // Store the original Y position for resetting
   targetY: y, // Target height for the ball
-  maxJumpHeight: 1450, // Max height above baseY
+  maxJumpHeight: canvas.height, // Max height above baseY
+  damping: 0.2, // Damping factor to smooth out movements
 });
 
 // Function to draw a ball
 const drawBall = (ball) => {
-  ctx.fillStyle = ball.color;
-  ctx.beginPath();
-  ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-  ctx.fill();
+  context.fillStyle = ball.color;
+  context.beginPath();
+  context.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+  context.fill();
 };
 
-// Function to make the ball move towards the targetY
+// Function to make the ball move towards the targetY with damping
 const moveToTargetY = (ball) => {
   const distanceToTarget = ball.targetY - ball.y;
-  if (Math.abs(distanceToTarget) > 1) {
-    ball.y += distanceToTarget * 1.2; // Increase sensitivity for faster movement
-  } else {
-    ball.y = ball.targetY;
-  }
+  ball.y += distanceToTarget * ball.damping; // Apply damping effect
 };
 
 // Generate balls and return them as an array
 const generateBalls = () => {
-  const distance = 30;
-  const amountOfBalls = Math.floor(canvas.width / distance) - 2;
+  const gapDistance = 30;
+  const distanceFromBottom = 200;
+  const amountOfBalls = Math.floor(canvas.width / gapDistance) - 2;
   const balls = [];
-  for (let i = 0; i < amountOfBalls; i++) {
-    balls.push(createBall(distance + i * distance, canvas.height - 100));
+  for (let index = 0; index < amountOfBalls; index++) {
+    balls.push(
+      createBall(
+        gapDistance + index * gapDistance,
+        canvas.height - distanceFromBottom
+      )
+    );
   }
   return balls;
 };
@@ -74,7 +77,42 @@ const getFrequencyData = () => {
   return frequencyDataArray;
 };
 
-// Function to handle user interaction
+// Animation function
+const animate = () => {
+  // clear canvas before rendering a new equalizer
+  context.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Retrieve frequency data
+  const frequencyData = getFrequencyData();
+
+  // Define a threshold to ignore very small sound levels
+  const soundThreshold = 10;
+
+  balls.forEach((ball, index) => {
+    if (index < frequencyData.length) {
+      const frequencyValue = frequencyData[index];
+
+      // Adjust sensitivity multiplier and apply damping effect
+      if (frequencyValue > soundThreshold) {
+        ball.targetY =
+          ball.baseY - Math.min(frequencyValue * 1.9, ball.maxJumpHeight); // Adjusted sensitivity
+      } else {
+        ball.targetY = ball.baseY; // No significant sound, so target baseY
+      }
+
+      // Move the ball towards the target height with damping
+      moveToTargetY(ball);
+      drawBall(ball);
+    }
+  });
+
+  requestAnimationFrame(animate);
+};
+
+// Start the animation
+animate();
+
+// Function to handle user interaction - a little hacky but for demo purposes
 const resumeAudioContext = () => {
   if (audioContext.state === "suspended") {
     audioContext
@@ -88,41 +126,6 @@ const resumeAudioContext = () => {
   }
 };
 
-// Add an event listener to resume the AudioContext on user interaction
+// Event listener to resume the AudioContext on user interaction - a little hacky but for demo purposes
 document.addEventListener("click", resumeAudioContext);
 document.addEventListener("touchstart", resumeAudioContext);
-
-// Animation function
-const animate = () => {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Retrieve frequency data
-  const frequencyData = getFrequencyData();
-
-  // Define a threshold to ignore very small sound levels
-  const soundThreshold = 10; // Adjust this threshold based on your needs
-
-  balls.forEach((ball, index) => {
-    if (index < frequencyData.length) {
-      const frequencyValue = frequencyData[index];
-
-      // Increase the sensitivity multiplier to make balls more responsive
-      if (frequencyValue > soundThreshold) {
-        ball.targetY =
-          ball.baseY - Math.min(frequencyValue * 1.9, ball.maxJumpHeight); // Increased sensitivity
-      } else {
-        ball.targetY = ball.baseY; // No significant sound, so target baseY
-      }
-
-      // Move the ball towards the target height with increased sensitivity
-      moveToTargetY(ball);
-
-      drawBall(ball);
-    }
-  });
-
-  requestAnimationFrame(animate);
-};
-
-// Start the animation
-animate();
