@@ -55,7 +55,7 @@ const moveToTargetY = (ball) => {
 // Generate balls and return them as an array
 const generateBalls = () => {
   const gapDistance = 30;
-  const distanceFromBottom = 200;
+  const distanceFromBottom = 100;
   const amountOfBalls = Math.floor(canvas.width / gapDistance) - 2;
   const balls = [];
   for (let index = 0; index < amountOfBalls; index++) {
