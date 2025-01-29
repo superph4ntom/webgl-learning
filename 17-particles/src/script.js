@@ -20,13 +20,34 @@ const scene = new THREE.Scene();
 const textureLoader = new THREE.TextureLoader();
 
 /**
+ * Particles
+ */
+// Material
+const particlesGeometry = new THREE.SphereGeometry(1, 32, 32);
+const particlesMaterial = new THREE.PointsMaterial({
+  size: 0.02,
+  sizeAttenuation: true,
+});
+
+//Points
+const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+scene.add(particles);
+
+for (let i = 0; i < 100; i++) {
+  const newParticle = new THREE.Points(
+    new THREE.SphereGeometry(1, Math.random(0, 100), Math.random(0, 100)),
+    particlesMaterial
+  );
+  scene.add(newParticle);
+}
+/**
  * Test cube
  */
-const cube = new THREE.Mesh(
-  new THREE.BoxGeometry(1, 1, 1),
-  new THREE.MeshBasicMaterial()
-);
-scene.add(cube);
+// const cube = new THREE.Mesh(
+//   new THREE.BoxGeometry(1, 1, 1),
+//   new THREE.MeshBasicMaterial()
+// );
+// scene.add(cube);
 
 /**
  * Sizes
