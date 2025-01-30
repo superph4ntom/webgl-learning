@@ -18,28 +18,50 @@ const scene = new THREE.Scene();
  * Textures
  */
 const textureLoader = new THREE.TextureLoader();
-
+const particleTexture = textureLoader.load("/textures/particles/2.png");
 /**
  * Particles
  */
+// Geometry
+const particlesGeometry = new THREE.BufferGeometry();
+const count = 5000;
+
+// xyz, xyz, xyz, xyz, xyz ... performance arrat to hold positions
+const positions = new Float32Array(count * 3);
+
+for (let i = 0; i < count * 3; i++) {
+  positions[i] = (Math.random() - 0.5) * 10;
+}
+
+particlesGeometry.setAttribute(
+  "position",
+  new THREE.BufferAttribute(positions, 3)
+);
+
 // Material
-const particlesGeometry = new THREE.SphereGeometry(1, 32, 32);
 const particlesMaterial = new THREE.PointsMaterial({
-  size: 0.02,
+  size: 0.1,
   sizeAttenuation: true,
+  color: "#ff88cc",
+  map: particleTexture,
+  alphaMap: particleTexture,
+  transparent: true,
 });
 
 //Points
 const particles = new THREE.Points(particlesGeometry, particlesMaterial);
 scene.add(particles);
 
-for (let i = 0; i < 100; i++) {
-  const newParticle = new THREE.Points(
-    new THREE.SphereGeometry(1, Math.random(0, 100), Math.random(0, 100)),
-    particlesMaterial
-  );
-  scene.add(newParticle);
-}
+// for (let i = 0; i < 10; i++) {
+//   const newParticle = new THREE.Points(particlesGeometry, particlesMaterial);
+//   newParticle.position.x = Math.random(3, 1000);
+//   newParticle.position.y = Math.random(3, 1000);
+//   newParticle.position.z = Math.random(30, 1000);
+
+//   scene.add(newParticle);
+//   console.log("here", newParticle.position);
+// }
+
 /**
  * Test cube
  */
