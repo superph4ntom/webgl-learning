@@ -140,6 +140,9 @@ function resumeAudioContext() {
   }
 }
 
+// start the animation
+animate();
+
 // recreate balls on window resize
 function resizeCanvas() {
   canvas.width = window.innerWidth;
@@ -147,9 +150,6 @@ function resizeCanvas() {
   context.clearRect(0, 0, canvas.width, canvas.height);
   balls = generateBalls();
 }
-
-// start the animation
-animate();
 
 // event listener to resume the AudioContext on user interaction
 document.addEventListener("click", resumeAudioContext);
