@@ -58,7 +58,7 @@ function createBall(xAxis, yAxis) {
     isFalling: true,
     baseY: yAxis,
     targetY: yAxis,
-    maxJumpHeight: canvas.height,
+    maxJumpHeight: canvas.height * 0.8,
     damping: config.EQ.DAMPING,
   };
 }
