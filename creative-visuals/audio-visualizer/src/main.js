@@ -5,6 +5,7 @@
     The sample audio is made from my own remix - I am a musician on my free time and
     experiment VST instruments, synths, etc. Work in progress.
 */
+import track from "./assets/public-domain-usa-swan-lake-cut.mp3";
 import "./style.css";
 
 // config
@@ -24,9 +25,16 @@ const config = {
 // init
 const canvas = document.getElementById("canvas");
 const context = canvas.getContext("2d");
-const audioElement = document.getElementById("audio");
+const playButton = document.getElementById("playButton");
 const audioContext = new AudioContext();
 const analyser = audioContext.createAnalyser();
+const audio = new Audio(track);
+let audioPlayerState = {
+  isPlaying: false,
+  text: "Play",
+};
+
+console.log(audioPlayerState);
 
 // create the EQ balls
 let balls = generateBalls();
@@ -34,7 +42,7 @@ let balls = generateBalls();
 analyser.fftSize = config.FFT_SIZE;
 
 // create a MediaElementSourceNode from the audio element
-const source = audioContext.createMediaElementSource(audioElement);
+const source = audioContext.createMediaElementSource(audio);
 
 // create frequency data array -> then we can determine when the
 // balls lift up or down depending on the frequency
@@ -126,22 +134,26 @@ function animate() {
   requestAnimationFrame(animate);
 }
 
-// handle user interaction
-function resumeAudioContext() {
-  if (audioContext.state === "suspended") {
-    audioContext
-      .resume()
-      .then(() => {
-        console.log("AudioContext resumed successfully");
-      })
-      .catch((error) => {
-        console.error("Error resuming AudioContext:", error);
-      });
-  }
-}
-
 // start the animation
 animate();
+
+function audioControl() {
+  if (audioContext.state === "suspended" || !audioPlayerState.isPlaying) {
+    audioContext.resume().then(() => {
+      audio.play();
+    });
+    audioPlayerState.isPlaying = true;
+    audioPlayerState.text = "pause";
+  } else {
+    audioContext.suspend().then(() => {
+      audio.pause();
+    });
+    audioPlayerState.isPlaying = true;
+    audioPlayerState.text = "play";
+  }
+
+  playButton.innerText = audioPlayerState.text;
+}
 
 // recreate balls on window resize
 function resizeCanvas() {
@@ -152,7 +164,7 @@ function resizeCanvas() {
 }
 
 // event listener to resume the AudioContext on user interaction
-document.addEventListener("click", resumeAudioContext);
-document.addEventListener("touchstart", resumeAudioContext);
+playButton.addEventListener("click", audioControl);
+playButton.addEventListener("touchstart", audioControl);
 window.addEventListener("resize", resizeCanvas);
 window.addEventListener("beforeunload", () => audioContext.close());
