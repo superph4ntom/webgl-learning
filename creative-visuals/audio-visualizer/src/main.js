@@ -28,7 +28,7 @@ const context = canvas.getContext("2d");
 const playButton = document.getElementById("playButton");
 const audioContext = new AudioContext();
 const analyser = audioContext.createAnalyser();
-const audio = new Audio(track);
+const audioTrack = new Audio(track);
 let isPlaying = false;
 
 // create the EQ balls
@@ -37,7 +37,7 @@ let balls = generateBalls();
 analyser.fftSize = config.FFT_SIZE;
 
 // create a MediaElementSourceNode from the audio element
-const source = audioContext.createMediaElementSource(audio);
+const source = audioContext.createMediaElementSource(audioTrack);
 
 // create frequency data array -> then we can determine when the
 // balls lift up or down depending on the frequency
@@ -46,6 +46,12 @@ const frequencyDataArray = new Uint8Array(bufferLength);
 
 source.connect(analyser);
 analyser.connect(audioContext.destination);
+
+// event listeners
+playButton.addEventListener("click", audioControl);
+window.addEventListener("resize", resizeCanvas);
+window.addEventListener("beforeunload", () => audioContext.close());
+// ---------------
 
 resizeCanvas();
 
@@ -136,12 +142,12 @@ function audioControl() {
   if (audioContext.state === "suspended" && !isPlaying) {
     isPlaying = true;
     audioContext.resume().then(() => {
-      audio.play();
+      audioTrack.play();
     });
   } else {
     isPlaying = false;
     audioContext.suspend().then(() => {
-      audio.pause();
+      audioTrack.pause();
     });
   }
 
@@ -155,9 +161,3 @@ function resizeCanvas() {
   context.clearRect(0, 0, canvas.width, canvas.height);
   balls = generateBalls();
 }
-
-// event listener to resume the AudioContext on user interaction
-playButton.addEventListener("click", audioControl);
-//playButton.addEventListener("touchend", audioControl);
-window.addEventListener("resize", resizeCanvas);
-window.addEventListener("beforeunload", () => audioContext.close());
