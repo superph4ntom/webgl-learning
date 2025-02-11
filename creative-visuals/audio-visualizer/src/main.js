@@ -23,37 +23,35 @@ const config = {
 };
 
 // init
-const canvas = document.getElementById("canvas");
-const context = canvas.getContext("2d");
-const playButton = document.getElementById("playButton");
+const canvas = document.querySelector(".canvas");
+const canvasContext = canvas.getContext("2d");
+const audioButton = document.querySelector(".button");
 const audioContext = new AudioContext();
-const analyser = audioContext.createAnalyser();
+const audioAnalyzer = audioContext.createAnalyser();
 const audioTrack = new Audio(track);
 let isPlaying = false;
 
 // create the EQ balls
 let balls = generateBalls();
 
-analyser.fftSize = config.FFT_SIZE;
+audioAnalyzer.fftSize = config.FFT_SIZE;
 
 // create a MediaElementSourceNode from the audio element
-const source = audioContext.createMediaElementSource(audioTrack);
+const audioSource = audioContext.createMediaElementSource(audioTrack);
 
 // create frequency data array -> then we can determine when the
 // balls lift up or down depending on the frequency
-const bufferLength = analyser.frequencyBinCount;
+const bufferLength = audioAnalyzer.frequencyBinCount;
 const frequencyDataArray = new Uint8Array(bufferLength);
 
-source.connect(analyser);
-analyser.connect(audioContext.destination);
+audioSource.connect(audioAnalyzer);
+audioAnalyzer.connect(audioContext.destination);
 
 // event listeners
-playButton.addEventListener("click", audioControl);
+audioButton.addEventListener("click", audioControl);
 window.addEventListener("resize", resizeCanvas);
 window.addEventListener("beforeunload", () => audioContext.close());
 // ---------------
-
-resizeCanvas();
 
 // fancy ball, not.
 function createBall(xAxis, yAxis) {
@@ -74,10 +72,10 @@ function createBall(xAxis, yAxis) {
 
 // I think the code speaks by itself
 function drawBall(ball) {
-  context.fillStyle = ball.color;
-  context.beginPath();
-  context.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-  context.fill();
+  canvasContext.fillStyle = ball.color;
+  canvasContext.beginPath();
+  canvasContext.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+  canvasContext.fill();
 }
 
 // move the ball towards the targetY with damping - omega smooth
@@ -106,12 +104,12 @@ function generateBalls() {
 }
 
 function getFrequencyData() {
-  analyser.getByteFrequencyData(frequencyDataArray);
+  audioAnalyzer.getByteFrequencyData(frequencyDataArray);
   return frequencyDataArray;
 }
 
 function animate() {
-  context.clearRect(0, 0, canvas.width, canvas.height);
+  canvasContext.clearRect(0, 0, canvas.width, canvas.height);
 
   const frequencyData = getFrequencyData();
   const soundThreshold = config.EQ.SOUND_THRESHOLD;
@@ -135,9 +133,6 @@ function animate() {
   requestAnimationFrame(animate);
 }
 
-// start the animation
-animate();
-
 function audioControl() {
   if (audioContext.state === "suspended" && !isPlaying) {
     isPlaying = true;
@@ -151,13 +146,19 @@ function audioControl() {
     });
   }
 
-  playButton.innerText = isPlaying === true ? "pause" : "play";
+  audioButton.innerText = isPlaying === true ? "pause" : "play";
 }
 
-// recreate balls on window resize
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  context.clearRect(0, 0, canvas.width, canvas.height);
+
+  // wipe canvasContext to avoid re-renders and eating more ram/resources
+  canvasContext.clearRect(0, 0, canvas.width, canvas.height);
   balls = generateBalls();
 }
+
+// start the animation
+animate();
+
+resizeCanvas();
