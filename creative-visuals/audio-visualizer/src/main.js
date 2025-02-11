@@ -29,12 +29,7 @@ const playButton = document.getElementById("playButton");
 const audioContext = new AudioContext();
 const analyser = audioContext.createAnalyser();
 const audio = new Audio(track);
-let audioPlayerState = {
-  isPlaying: false,
-  text: "Play",
-};
-
-console.log(audioPlayerState);
+let isPlaying = false;
 
 // create the EQ balls
 let balls = generateBalls();
@@ -138,21 +133,19 @@ function animate() {
 animate();
 
 function audioControl() {
-  if (audioContext.state === "suspended" || !audioPlayerState.isPlaying) {
+  if (audioContext.state === "suspended" && !isPlaying) {
+    isPlaying = true;
     audioContext.resume().then(() => {
       audio.play();
     });
-    audioPlayerState.isPlaying = true;
-    audioPlayerState.text = "pause";
   } else {
+    isPlaying = false;
     audioContext.suspend().then(() => {
       audio.pause();
     });
-    audioPlayerState.isPlaying = true;
-    audioPlayerState.text = "play";
   }
 
-  playButton.innerText = audioPlayerState.text;
+  playButton.innerText = isPlaying === true ? "pause" : "play";
 }
 
 // recreate balls on window resize
@@ -165,6 +158,6 @@ function resizeCanvas() {
 
 // event listener to resume the AudioContext on user interaction
 playButton.addEventListener("click", audioControl);
-playButton.addEventListener("touchstart", audioControl);
+//playButton.addEventListener("touchend", audioControl);
 window.addEventListener("resize", resizeCanvas);
 window.addEventListener("beforeunload", () => audioContext.close());
