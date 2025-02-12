@@ -5,7 +5,7 @@
     The sample audio is made from my own remix - I am a musician on my free time and
     experiment VST instruments, synths, etc. Work in progress.
 */
-import track from "./assets/public-domain-usa-swan-lake-cut.mp3";
+import track01 from "./assets/public-domain-usa-swan-lake-cut.mp3";
 import "./style.css";
 
 // config
@@ -25,10 +25,12 @@ const config = {
 // init
 const canvas = document.querySelector(".canvas");
 const canvasContext = canvas.getContext("2d");
+const currentTimeText = document.querySelector(".current-time");
+const trackDurationText = document.querySelector(".end-time");
 const audioButton = document.querySelector(".button");
 const audioContext = new AudioContext();
 const audioAnalyzer = audioContext.createAnalyser();
-const audioTrack = new Audio(track);
+const audioTrack = new Audio(track01);
 let isPlaying = false;
 
 // create the EQ balls
@@ -48,8 +50,12 @@ audioSource.connect(audioAnalyzer);
 audioAnalyzer.connect(audioContext.destination);
 
 // event listeners
-audioButton.addEventListener("click", audioControl);
-window.addEventListener("resize", resizeCanvas);
+audioButton.addEventListener("click", audioControl, { once: true });
+// waits for metadata to be available and the it add the total seconds to the UI
+audioSource.mediaElement.addEventListener("loadedmetadata", setTrackMetadata, {
+  once: true,
+});
+window.addEventListener("resize", resizeCanvas, { once: true });
 window.addEventListener("beforeunload", () => audioContext.close());
 // ---------------
 
@@ -130,6 +136,7 @@ function animate() {
     }
   });
 
+  setTrackTime();
   requestAnimationFrame(animate);
 }
 
@@ -147,6 +154,22 @@ function audioControl() {
   }
 
   audioButton.innerText = isPlaying === true ? "pause" : "play";
+}
+
+function setTrackMetadata() {
+  trackDurationText.innerText = Math.floor(audioSource.mediaElement.duration);
+}
+
+// set track time
+function setTrackTime() {
+  const currentTime = Math.floor(audioContext.currentTime);
+  if (
+    Number(currentTimeText.innerText) === currentTime &&
+    currentTime <= Number(currentTimeText.innerText)
+  )
+    return;
+
+  currentTimeText.innerText = currentTime;
 }
 
 function resizeCanvas() {
