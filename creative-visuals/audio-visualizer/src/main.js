@@ -1,5 +1,5 @@
 /*
-    Audio Spectrum Visualizer - ASV
+    *Audio Spectrum Visualizer - ASV*
     Copyright: Goncalo Marques, 2024
     I did this for the fun of understanding how I could visualize audio in a fun way
     just because it's cool! 
