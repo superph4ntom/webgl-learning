@@ -5,6 +5,7 @@
     The sample audio is made from my own remix - I am a musician on my free time and
     experiment VST instruments, synths, etc. Work in progress.
 */
+import { formatTime } from "./util/index";
 import track01 from "./assets/public-domain-usa-swan-lake-cut.mp3";
 import "./style.css";
 
@@ -50,12 +51,12 @@ audioSource.connect(audioAnalyzer);
 audioAnalyzer.connect(audioContext.destination);
 
 // event listeners
-audioButton.addEventListener("click", audioControl, { once: true });
+audioButton.addEventListener("click", audioControl);
 // waits for metadata to be available and the it add the total seconds to the UI
 audioSource.mediaElement.addEventListener("loadedmetadata", setTrackMetadata, {
   once: true,
 });
-window.addEventListener("resize", resizeCanvas, { once: true });
+window.addEventListener("resize", resizeCanvas);
 window.addEventListener("beforeunload", () => audioContext.close());
 // ---------------
 
@@ -141,23 +142,24 @@ function animate() {
 }
 
 function audioControl() {
-  if (audioContext.state === "suspended" && !isPlaying) {
-    isPlaying = true;
+  if (!isPlaying) {
     audioContext.resume().then(() => {
       audioTrack.play();
     });
+
+    isPlaying = true;
   } else {
-    isPlaying = false;
     audioContext.suspend().then(() => {
       audioTrack.pause();
     });
+    isPlaying = false;
   }
 
   audioButton.innerText = isPlaying === true ? "pause" : "play";
 }
 
 function setTrackMetadata() {
-  trackDurationText.innerText = Math.floor(audioSource.mediaElement.duration);
+  trackDurationText.innerText = formatTime(audioTrack.duration);
 }
 
 // set track time
@@ -169,7 +171,7 @@ function setTrackTime() {
   )
     return;
 
-  currentTimeText.innerText = currentTime;
+  currentTimeText.innerText = formatTime(currentTime);
 }
 
 function resizeCanvas() {

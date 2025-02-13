@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap");
+
 * {
   margin: 0;
   padding: 0;
@@ -16,11 +18,24 @@ canvas {
   height: auto;
 }
 
-.button {
+.player {
   position: absolute;
   bottom: 1rem;
   left: 50%;
   transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.button,
+.current-time,
+.end-time {
+  font-family: "Inter", sans-serif;
+}
+
+.button {
   width: 4rem;
   height: 4rem;
   border: none;
@@ -34,4 +49,10 @@ canvas {
 
 .button:hover {
   opacity: 0.7;
+}
+
+.current-time,
+.end-time {
+  color: #fff;
+  width: 3rem;
 }
