@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import obfuscatorPlugin from "vite-plugin-javascript-obfuscator";
 
-export default defineConfig(async ({ command, mode }) => {
+export default defineConfig(async () => {
   const config = {
     plugins: [
       obfuscatorPlugin({
