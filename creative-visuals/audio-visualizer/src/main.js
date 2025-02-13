@@ -187,6 +187,7 @@ function drawSynthwaveBackground() {
 
 function animate() {
   canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+
   const frequencyData = getFrequencyData();
   const soundThreshold = config.EQ.SOUND_THRESHOLD;
 
@@ -212,7 +213,6 @@ function animate() {
   }
 
   drawSynthwaveBackground();
-
   requestAnimationFrame(animate);
 }
 
@@ -221,13 +221,11 @@ function audioControl() {
     audioContext.resume().then(() => {
       audioTrack.play();
     });
-
     isPlaying = true;
   } else {
     audioContext.suspend().then(() => {
       audioTrack.pause();
     });
-
     isPlaying = false;
   }
 
