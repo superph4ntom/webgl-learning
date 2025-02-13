@@ -1,4 +1,5 @@
 /*
+    Audio Spectrum Visualizer - ASV
     Copyright: Goncalo Marques, 2024
     I did this for the fun of understanding how I could visualize audio in a fun way
     just because it's cool! 
@@ -12,7 +13,7 @@ import "./style.css";
 // config
 const config = {
   FFT_SIZE: 256,
-  EQ: {
+  ASV: {
     COLOR: "white",
     JUMP_FORCE: 1,
     FALL_FORCE: 2,
@@ -35,7 +36,7 @@ const audioTrack = new Audio(track01);
 let isPlaying = false;
 let synthwaveOffset = 0;
 
-// create the EQ balls
+// create the ASV balls
 let balls = generateBalls();
 
 audioAnalyzer.fftSize = config.FFT_SIZE;
@@ -68,14 +69,14 @@ function createBall(xAxis, yAxis) {
     x: xAxis,
     y: yAxis,
     radius: 8,
-    color: config.EQ.COLOR,
-    jumpForce: config.EQ.JUMP_FORCE,
-    fallForce: config.EQ.FALL_FORCE,
+    color: config.ASV.COLOR,
+    jumpForce: config.ASV.JUMP_FORCE,
+    fallForce: config.ASV.FALL_FORCE,
     isFalling: true,
     baseY: yAxis,
     targetY: yAxis,
     maxJumpHeight: canvas.height * 0.8,
-    damping: config.EQ.DAMPING,
+    damping: config.ASV.DAMPING,
   };
 }
 
@@ -95,8 +96,8 @@ function moveToTargetY(ball) {
 
 // generate balls and return them as an array
 function generateBalls() {
-  const gapDistance = config.EQ.BALL_GAP_DISTANCE;
-  const distanceFromBottom = config.EQ.BALL_BOTTOM_DISTANCE;
+  const gapDistance = config.ASV.BALL_GAP_DISTANCE;
+  const distanceFromBottom = config.ASV.BALL_BOTTOM_DISTANCE;
   const amountOfBalls = Math.floor(canvas.width / gapDistance);
   const balls = [];
 
@@ -146,8 +147,13 @@ function drawSynthwaveBackground() {
   const vanishingPointY = horizonHeight;
   const totalHorizonLines = 20;
 
+  // Save the current context state so that changes only affect the lines
+  canvasContext.save();
+
   canvasContext.strokeStyle = "#fff";
+  canvasContext.shadowColor = "#ededed"; // White glow
   canvasContext.lineWidth = 1;
+  canvasContext.shadowBlur = 6;
 
   // draw horizon lines
   for (let index = 0; index <= totalHorizonLines; index++) {
@@ -179,17 +185,32 @@ function drawSynthwaveBackground() {
     canvasContext.moveTo(x, canvas.height);
     canvasContext.lineTo(vanishingPointX, vanishingPointY);
     canvasContext.stroke();
+
+    // incorrect code that generates a cool effect
+    // const randomOffset = Math.random() * 10 - 5; // Random offset between -5 and 5 pixels
+    // const startX = x + randomOffset; // Offset the starting X position a bit
+
+    // canvasContext.beginPath();
+    // canvasContext.moveTo(startX, canvas.height);
+    // canvasContext.lineTo(vanishingPointX, vanishingPointY);
+    // canvasContext.stroke();
   }
 
   // move the synthwave offset
   synthwaveOffset += 0.005;
+
+  // Reset glow effect after drawing the lines
+  canvasContext.shadowColor = "transparent";
+  canvasContext.shadowBlur = 0;
 }
 
 function animate() {
   canvasContext.clearRect(0, 0, canvas.width, canvas.height);
 
+  drawSynthwaveBackground();
+
   const frequencyData = getFrequencyData();
-  const soundThreshold = config.EQ.SOUND_THRESHOLD;
+  const soundThreshold = config.ASV.SOUND_THRESHOLD;
 
   balls.forEach((ball, index) => {
     if (index < frequencyData.length) {
@@ -212,7 +233,6 @@ function animate() {
     drawProgressBorder();
   }
 
-  drawSynthwaveBackground();
   requestAnimationFrame(animate);
 }
 
