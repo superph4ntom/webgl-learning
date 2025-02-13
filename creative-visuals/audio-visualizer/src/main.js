@@ -33,6 +33,7 @@ const audioContext = new AudioContext();
 const audioAnalyzer = audioContext.createAnalyser();
 const audioTrack = new Audio(track01);
 let isPlaying = false;
+let synthwaveOffset = 0;
 
 // create the EQ balls
 let balls = generateBalls();
@@ -56,6 +57,7 @@ audioButton.addEventListener("click", audioControl);
 audioSource.mediaElement.addEventListener("loadedmetadata", setTrackMetadata, {
   once: true,
 });
+audioTrack.addEventListener("ended", setTrackEnd);
 window.addEventListener("resize", resizeCanvas);
 window.addEventListener("beforeunload", () => audioContext.close());
 // ---------------
@@ -115,9 +117,76 @@ function getFrequencyData() {
   return frequencyDataArray;
 }
 
+function drawProgressBorder() {
+  if (!audioTrack.duration) return;
+
+  const progress = audioTrack.currentTime / audioTrack.duration;
+  const width = canvas.width;
+  const height = canvas.height;
+
+  const perimeter = 2 * (width + height);
+  canvasContext.lineWidth = 10;
+  canvasContext.strokeStyle = "#fff";
+
+  canvasContext.beginPath();
+  canvasContext.rect(0, 0, width, height);
+
+  canvasContext.setLineDash([perimeter]);
+  canvasContext.lineDashOffset = perimeter * (1 - progress);
+
+  canvasContext.stroke();
+
+  // Reset line dash settings
+  canvasContext.setLineDash([]);
+}
+
+function drawSynthwaveBackground() {
+  const horizonHeight = canvas.height * 0.4;
+  const vanishingPointX = canvas.width / 2;
+  const vanishingPointY = horizonHeight;
+  const totalHorizonLines = 20;
+
+  canvasContext.strokeStyle = "#fff";
+  canvasContext.lineWidth = 1;
+
+  // draw horizon lines
+  for (let index = 0; index <= totalHorizonLines; index++) {
+    // modulo %1 to keep the progress between 0 and 1, progress is current the distance from the horizon
+    let progress = (index / totalHorizonLines + synthwaveOffset) % 1;
+
+    // vertical position y with ease
+    const waveVerticalPositionY =
+      horizonHeight + (canvas.height - horizonHeight) * Math.pow(progress, 2);
+
+    // 0 at the bottom and 1 at the horizonHeight.
+    const distanceFromBottomX =
+      (canvas.height - waveVerticalPositionY) / (canvas.height - horizonHeight);
+
+    const leftBoundary = distanceFromBottomX * vanishingPointX;
+    const rightBoundary =
+      canvas.width - distanceFromBottomX * (canvas.width - vanishingPointX);
+
+    canvasContext.beginPath();
+    canvasContext.moveTo(leftBoundary, waveVerticalPositionY);
+    canvasContext.lineTo(rightBoundary, waveVerticalPositionY);
+    canvasContext.stroke();
+  }
+
+  // draw vertical lines
+  const spaceBetweenWaves = 32;
+  for (let x = 0; x <= canvas.width; x += spaceBetweenWaves) {
+    canvasContext.beginPath();
+    canvasContext.moveTo(x, canvas.height);
+    canvasContext.lineTo(vanishingPointX, vanishingPointY);
+    canvasContext.stroke();
+  }
+
+  // move the synthwave offset
+  synthwaveOffset += 0.005;
+}
+
 function animate() {
   canvasContext.clearRect(0, 0, canvas.width, canvas.height);
-
   const frequencyData = getFrequencyData();
   const soundThreshold = config.EQ.SOUND_THRESHOLD;
 
@@ -137,7 +206,13 @@ function animate() {
     }
   });
 
-  setTrackTime();
+  if (isPlaying) {
+    setTrackTime();
+    drawProgressBorder();
+  }
+
+  drawSynthwaveBackground();
+
   requestAnimationFrame(animate);
 }
 
@@ -152,6 +227,7 @@ function audioControl() {
     audioContext.suspend().then(() => {
       audioTrack.pause();
     });
+
     isPlaying = false;
   }
 
@@ -165,13 +241,12 @@ function setTrackMetadata() {
 // set track time
 function setTrackTime() {
   const currentTime = Math.floor(audioContext.currentTime);
-  if (
-    Number(currentTimeText.innerText) === currentTime &&
-    currentTime <= Number(currentTimeText.innerText)
-  )
-    return;
-
   currentTimeText.innerText = formatTime(currentTime);
+}
+
+function setTrackEnd() {
+  isPlaying = false;
+  audioButton.innerText = "play";
 }
 
 function resizeCanvas() {
