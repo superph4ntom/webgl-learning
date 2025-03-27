@@ -2,69 +2,38 @@
 
 import { Music } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-//import * as Tone from "tone";
+import { CONFIG } from "../data/config";
 
 export default function Home() {
-  // MIDI & Playback State
-  const [description, setDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [midiData, setMidiData] = useState<string[] | null>([
-    "A2",
-    "D3",
-    "E3",
-    "C1",
-    "G2",
-    "C3",
-    "E3",
-    "C1",
-    "A2",
-    "D3",
-    "E3",
-    "C1",
-    "G2",
-    "C3",
-    "E3",
-    "C1",
-    "A2",
-    "D3",
-    "E3",
-    "C1",
-    "G2",
-    "C3",
-    "E3",
-    "C1",
-  ]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLooping, setIsLooping] = useState(false);
+  const [description, setDescription] = useState("");
 
-  // Synth Settings
-  const [waveType, setWaveType] = useState("sine");
-  const [filterFrequency, setFilterFrequency] = useState(800);
+  const [midiData, setMidiData] = useState<string[] | null>(
+    CONFIG.default.midi
+  );
+  const [waveType, setWaveType] = useState(CONFIG.default.waveType);
+  const [filterFrequency, setFilterFrequency] = useState(
+    CONFIG.default.filterFrequency
+  );
 
-  // Envelope
-  const [attack, setAttack] = useState(0.05);
-  const [decay, setDecay] = useState(0.2);
-  const [sustain, setSustain] = useState(0.5);
-  const [release, setRelease] = useState(0.5);
+  const [attack, setAttack] = useState(CONFIG.default.attack);
+  const [decay, setDecay] = useState(CONFIG.default.decay);
+  const [sustain, setSustain] = useState(CONFIG.default.sustain);
+  const [release, setRelease] = useState(CONFIG.default.release);
 
-  // Vibrato (Modulation) Settings
   const [modulationDepth, setModulationDepth] = useState(0.5);
-  const [lfoSpeed, setLfoSpeed] = useState(1);
+  const [lfoSpeed, setLfoSpeed] = useState(CONFIG.default.lfoSpeed);
+  const [tempo, setTempo] = useState(CONFIG.default.tempo);
 
-  // Tempo
-  const [tempo, setTempo] = useState(120);
-
-  // Tone.js Refs
-  const synthRef = useRef<any>(null);
-  const filterRef = useRef<any>(null);
-  const vibratoRef = useRef<any>(null);
-  const analyserRef = useRef<any>(null);
-  const loopRef = useRef<any>(null);
+  const synthRef = useRef(null);
+  const filterRef = useRef(null);
+  const vibratoRef = useRef(null);
+  const analyserRef = useRef(null);
+  const loopRef = useRef(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<any>(null);
-
-  // Check for MIDI data
-  const hasMidi = midiData && midiData.length > 0;
+  const animationRef = useRef(null);
 
   // =========================
   // 1) SETUP: Create Nodes Once
@@ -105,7 +74,6 @@ export default function Home() {
       analyserRef.current?.dispose();
       loopRef.current?.dispose();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // =========================
@@ -207,7 +175,7 @@ export default function Home() {
   // 5) PLAYBACK CONTROLS
   // =========================
   const playMidi = async () => {
-    if (!hasMidi || isPlaying) return;
+    if (isPlaying) return;
     setIsPlaying(true);
     animationRef.current = requestAnimationFrame(animate);
     Tone.Transport.start();
@@ -229,16 +197,15 @@ export default function Home() {
   };
 
   const startLoop = () => {
-    if (!hasMidi) return;
     if (!loopRef.current) {
       let index = 0;
       loopRef.current = new Tone.Loop((time) => {
-        if (!midiData || midiData.length === 0) return;
         const note = midiData[index % midiData.length];
         synthRef.current?.triggerAttackRelease(note, "8n", time);
         index++;
       }, "8n");
     }
+
     loopRef.current._index = 0;
     loopRef.current.start(0);
     Tone.Transport.start();
@@ -248,21 +215,19 @@ export default function Home() {
   };
 
   const stopLoop = () => {
-    if (loopRef.current) {
-      loopRef.current.stop();
-    }
+    if (loopRef.current) loopRef.current.stop();
     setIsLooping(false);
   };
 
   const stopMidi = () => {
     Tone.Transport.stop();
+
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
       animationRef.current = null;
     }
-    if (isLooping) {
-      stopLoop();
-    }
+
+    if (isLooping) stopLoop();
     setIsPlaying(false);
   };
 
@@ -320,7 +285,7 @@ export default function Home() {
             <button
               onClick={playMidi}
               className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded"
-              disabled={!hasMidi || isPlaying}
+              disabled={isPlaying}
             >
               Play Once
             </button>
@@ -328,7 +293,7 @@ export default function Home() {
               <button
                 onClick={startLoop}
                 className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded"
-                disabled={!hasMidi || isPlaying}
+                disabled={isPlaying}
               >
                 Start Loop
               </button>
@@ -343,7 +308,7 @@ export default function Home() {
             <button
               onClick={stopMidi}
               className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded"
-              disabled={!hasMidi && !isPlaying}
+              disabled={!isPlaying}
             >
               Stop All
             </button>
@@ -354,14 +319,12 @@ export default function Home() {
               Randomize Settings
             </button>
           </div>
-          {hasMidi && (
-            <canvas
-              ref={canvasRef}
-              width={600}
-              height={200}
-              className="border border-gray-500 mt-4"
-            />
-          )}
+          <canvas
+            ref={canvasRef}
+            width={600}
+            height={200}
+            className="border border-gray-500 mt-4"
+          />
 
           <div className="mt-6 text-left">
             <h2 className="text-xl font-semibold">Synth Settings</h2>
