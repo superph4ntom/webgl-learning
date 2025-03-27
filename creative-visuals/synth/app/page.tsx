@@ -23,6 +23,7 @@ export default function Home() {
   const [decay, setDecay] = useState(CONFIG.default.decay);
   const [sustain, setSustain] = useState(CONFIG.default.sustain);
   const [release, setRelease] = useState(CONFIG.default.release);
+  const [detune, setDetune] = useState(0);
 
   const [modulationDepth, setModulationDepth] = useState(0.5);
   const [lfoSpeed, setLfoSpeed] = useState(CONFIG.default.lfoSpeed);
@@ -46,7 +47,7 @@ export default function Home() {
   useEffect(() => {
     // Create the PolySynth with envelope and oscillator settings
     synthRef.current = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: waveType },
+      oscillator: { type: waveType, detune: detune },
       envelope: { attack, decay, sustain, release },
     });
 
@@ -89,6 +90,14 @@ export default function Home() {
       });
     }
   }, [waveType, attack, decay, sustain, release]);
+
+  useEffect(() => {
+    if (synthRef.current) {
+      synthRef.current.set({
+        oscillator: { detune: detune }, // Update the detune property here
+      });
+    }
+  }, [detune]);
 
   useEffect(() => {
     if (filterRef.current) filterRef.current.frequency.value = filterFrequency;
@@ -375,6 +384,22 @@ export default function Home() {
                   <span>{value}</span>
                 </div>
               ))}
+              <div className="space-y-2 mt-4">
+                <label htmlFor="detune" className="block">
+                  Detune (Octave Shift)
+                </label>
+                <input
+                  id="detune"
+                  type="range"
+                  min="-1200"
+                  max="1200"
+                  step="100"
+                  value={detune}
+                  onChange={(event) => setDetune(Number(event.target.value))}
+                  className="w-full"
+                />
+                <span>{(detune / 100).toFixed(1)} semitones</span>
+              </div>
             </div>
 
             <h3 className="mt-6 text-lg font-semibold">Modulation Controls</h3>
