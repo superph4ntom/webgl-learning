@@ -52,7 +52,6 @@ export default function Home() {
   );
   const [attack, setAttack] = useState<number>(CONFIG.default.attack);
   const [decay, setDecay] = useState<number>(CONFIG.default.decay);
-  // Ensure initial sustain is within [0, 1]
   const [sustain, setSustain] = useState<number>(
     Math.min(1, Math.max(0, CONFIG.default.sustain))
   );
@@ -61,6 +60,10 @@ export default function Home() {
   const [modulationDepth, setModulationDepth] = useState<number>(0.5);
   const [lfoSpeed, setLfoSpeed] = useState<number>(CONFIG.default.lfoSpeed);
   const [tempo, setTempo] = useState<number>(CONFIG.default.tempo);
+
+  // Custom loop state
+  const [isCustomLoopActive, setIsCustomLoopActive] = useState(false);
+  const [customLoopNotes, setCustomLoopNotes] = useState<string[]>([]);
 
   // --- Refs ---
   const synthRef = useRef<Tone.Instrument<any> | null>(null);
@@ -112,9 +115,24 @@ export default function Home() {
     },
   ];
 
+  // --- Randomize Sound Parameters ---
+  function randomizeSettings() {
+    const waveTypes = ["sine", "square", "sawtooth", "triangle"];
+    setWaveType(waveTypes[Math.floor(Math.random() * waveTypes.length)]);
+    const random = (max = 1) => parseFloat((Math.random() * max).toFixed(2));
+    setFilterFrequency(Math.floor(Math.random() * 14981) + 20);
+    setAttack(random(0.5) + 0.01);
+    setDecay(random(1) + 0.01);
+    setSustain(random(1)); // Sustain is 0-1
+    setRelease(random(3) + 0.01); // Allow longer release up to ~3s
+    setDetune(Math.floor(Math.random() * 25 - 12) * 100);
+    setModulationDepth(random());
+    setLfoSpeed(parseFloat((Math.random() * 19.9 + 0.1).toFixed(1)));
+    setTempo(Math.floor(Math.random() * 181) + 60);
+  }
+
   // --- Tone.js Initialization and Update Effects ---
 
-  // Effect to Initialize/Update Instrument
   useEffect(() => {
     console.log(`Instrument changing to: ${selectedInstrument}`);
     stopMidi();
@@ -126,7 +144,7 @@ export default function Home() {
     let newSynth: Tone.Instrument<any> | null = null;
     try {
       if (isMonophonicForPolySynth(selectedInstrument)) {
-        let Ctor: any = Tone.Synth; // Default constructor
+        let Ctor: any = Tone.Synth;
         switch (selectedInstrument) {
           case "AMSynth":
             Ctor = Tone.AMSynth;
@@ -143,7 +161,6 @@ export default function Home() {
             break;
         }
         newSynth = new Tone.PolySynth(Ctor, { maxPolyphony: 8 });
-        // Apply initial settings applicable to PolySynth voices
         newSynth.set({ envelope: { attack, decay, sustain, release } });
         if (
           ["Synth", "AMSynth", "FMSynth", "MembraneSynth"].includes(
@@ -204,7 +221,7 @@ export default function Home() {
     };
   }, [selectedInstrument]);
 
-  // Effect to Update Synth Parameters (ADSR, WaveType, Detune)
+  // Effect to Update Synth Parameters
   useEffect(() => {
     if (!synthRef.current) return;
     try {
@@ -218,21 +235,19 @@ export default function Home() {
             });
           });
         } else {
-          // Fallback if voices isn't defined
           synthRef.current.set({
             envelope: { attack, decay, sustain, release },
             oscillator: { type: waveType, detune: detune },
           });
         }
       } else if (synthRef.current instanceof Tone.PluckSynth) {
-        // For PluckSynth, parameters are not directly mappable.
+        // Not applicable.
       }
     } catch (e) {
       console.error("Could not set some synth options:", e);
     }
   }, [waveType, attack, decay, sustain, release, detune]);
 
-  // Other parameter update effects (Filter, Vibrato, Tempo)
   useEffect(() => {
     filterRef.current?.frequency.rampTo(filterFrequency, 0.05);
   }, [filterFrequency]);
@@ -245,53 +260,44 @@ export default function Home() {
 
   // --- Core Logic Functions ---
 
-  // WAVEFORM VISUALIZATION FUNCTION
+  // Waveform Visualization
   const animate = () => {
     if (animationRef.current === null) return;
     if (!analyserRef.current || !canvasRef.current) {
       animationRef.current = requestAnimationFrame(animate);
       return;
     }
-    const analyser = analyserRef.current;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvasRef.current.getContext("2d");
     if (!ctx) return;
-    const buffer = analyser.getValue();
+    const buffer = analyserRef.current.getValue();
     if (!buffer || !(buffer instanceof Float32Array) || buffer.length === 0) {
       animationRef.current = requestAnimationFrame(animate);
       return;
     }
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     ctx.fillStyle = "rgba(17, 24, 39, 1)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     const glowColor = "#2dd4bf";
     ctx.shadowColor = glowColor;
     ctx.shadowBlur = 10;
     ctx.lineWidth = 2;
     ctx.strokeStyle = glowColor;
     ctx.beginPath();
-    const sliceWidth = (canvas.width * 1.0) / buffer.length;
+    const sliceWidth = canvasRef.current.width / buffer.length;
     let x = 0;
     for (let i = 0; i < buffer.length; i++) {
-      const val = buffer[i];
-      const y = (1 - (val + 1) / 2) * canvas.height;
-      if (i === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
+      const y = (1 - (buffer[i] + 1) / 2) * canvasRef.current.height;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
       x += sliceWidth;
     }
     ctx.stroke();
     ctx.shadowColor = "transparent";
     ctx.shadowBlur = 0;
-    if (animationRef.current !== null) {
-      animationRef.current = requestAnimationFrame(animate);
-    }
+    animationRef.current = requestAnimationFrame(animate);
   };
 
-  // Form submission handler
+  // Form Submission Handler
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (isLoading) return;
@@ -323,7 +329,7 @@ export default function Home() {
     }
   }
 
-  // Extract musical notes
+  // Extract Musical Notes
   const extractABCNotes = (midiText: string): string[] => {
     if (!midiText || typeof midiText !== "string") return [];
     const notes = midiText.match(/[A-G][#b]?\d/gi);
@@ -332,84 +338,55 @@ export default function Home() {
 
   // --- Playback Control Functions ---
 
-  // Start looping the MIDI sequence
   async function startLoop() {
-    if (isPlaying || !midiData || midiData.length === 0 || !synthRef.current) {
+    const loopNotes =
+      isCustomLoopActive && customLoopNotes.length > 0
+        ? customLoopNotes
+        : midiData || [];
+    if (isPlaying || loopNotes.length === 0 || !synthRef.current) {
       console.log("StartLoop condition not met.");
       return;
     }
     try {
       await Tone.start();
-      console.log("Running stopMidi before starting loop...");
       stopMidi();
-      console.log("Proceeding with startLoop...");
       setIsPlaying(true);
       setIsLooping(true);
-      if (animationRef.current === null) {
-        console.log("Requesting animation frame (startLoop)");
+      if (animationRef.current === null)
         animationRef.current = requestAnimationFrame(animate);
-      }
       loopRef.current?.stop();
       loopRef.current?.dispose();
       loopRef.current = null;
       let index = 0;
-      console.log("Creating Tone.Loop...");
       loopRef.current = new Tone.Loop((time) => {
-        if (!synthRef.current || !midiData || midiData.length === 0) {
-          console.warn("Loop callback condition failed.");
+        if (!synthRef.current || loopNotes.length === 0) {
           loopRef.current?.stop();
           stopMidi();
           return;
         }
-        const note = midiData[index % midiData.length];
+        const note = loopNotes[index % loopNotes.length];
         try {
-          if (synthRef.current) {
-            synthRef.current.triggerAttackRelease(note, "8n", time);
-          } else {
-            console.warn("Loop Tick: synthRef null!");
-            loopRef.current?.stop();
-            stopMidi();
-            return;
-          }
+          synthRef.current.triggerAttackRelease(note, "8n", time);
         } catch (e) {
-          console.error(`Error in triggerAttackRelease ('${note}') loop:`, e);
+          console.error(`Error triggering note '${note}':`, e);
           loopRef.current?.stop();
           stopMidi();
           return;
         }
         index++;
       }, "8n").start(0);
-      console.log("Loop object created/started.");
-      console.log("Starting Tone.Transport...");
       Tone.Transport.start(Tone.now());
-      console.log("Tone.Transport started.");
     } catch (error) {
       console.error("Error during startLoop setup:", error);
       stopMidi();
     }
   }
 
-  // Stop loop (calls stopMidi)
   function stopLoop() {
-    console.log("Stopping loop via toggle button...");
     stopMidi();
   }
 
-  // Stop all MIDI playback
   function stopMidi() {
-    if (
-      !isPlaying &&
-      !isLooping &&
-      animationRef.current === null &&
-      Tone.Transport.state !== "started"
-    ) {
-      return;
-    }
-    console.log("Running stopMidi... State:", {
-      isPlaying,
-      isLooping,
-      transport: Tone.Transport.state,
-    });
     Tone.Transport.stop();
     Tone.Transport.cancel();
     partRef.current?.stop();
@@ -417,52 +394,61 @@ export default function Home() {
     partRef.current = null;
     loopRef.current?.stop();
     if (animationRef.current !== null) {
-      console.log("Cancelling animation frame", animationRef.current);
       cancelAnimationFrame(animationRef.current);
       animationRef.current = null;
     }
     if (synthRef.current && synthRef.current instanceof Tone.PolySynth) {
       try {
-        console.log("Calling releaseAll on PolySynth");
         synthRef.current.releaseAll();
       } catch (e) {
         console.warn("Error calling releaseAll:", e);
       }
-    } else {
-      console.log("Skipping releaseAll");
     }
-    if (isPlaying || isLooping) {
-      setIsPlaying(false);
-      setIsLooping(false);
-      console.log("Playback states reset");
-    } else {
-      console.log("Playback states were already false");
-    }
+    setIsPlaying(false);
+    setIsLooping(false);
   }
 
-  // Randomize settings
-  function randomizeSettings() {
-    console.log("Randomizing settings...");
-    const waveTypes = ["sine", "square", "sawtooth", "triangle"];
-    setWaveType(waveTypes[Math.floor(Math.random() * waveTypes.length)]);
-    const random = (max = 1) => parseFloat((Math.random() * max).toFixed(2));
-    setFilterFrequency(Math.floor(Math.random() * 14981) + 20);
-    setAttack(random(0.5) + 0.01);
-    setDecay(random(1) + 0.01);
-    setSustain(random(1)); // Sustain is 0-1
-    setRelease(random(3) + 0.01); // Allow longer release up to ~3s
-    setDetune(Math.floor(Math.random() * 25 - 12) * 100);
-    setModulationDepth(random());
-    setLfoSpeed(parseFloat((Math.random() * 19.9 + 0.1).toFixed(1)));
-    setTempo(Math.floor(Math.random() * 181) + 60);
-    const randomInstrument =
-      instrumentOptions[Math.floor(Math.random() * instrumentOptions.length)]
-        .value;
-    setSelectedInstrument(randomInstrument);
-  }
+  // --- Custom Loop Editor Functions ---
+
+  const noteOptions = [
+    "C",
+    "C#",
+    "D",
+    "D#",
+    "E",
+    "F",
+    "F#",
+    "G",
+    "G#",
+    "A",
+    "A#",
+    "B",
+  ];
+
+  const addNote = (note: string) => {
+    setCustomLoopNotes((prev) => [...prev, note + "4"]);
+  };
+
+  const removeNote = (index: number) => {
+    setCustomLoopNotes((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const clearCustomLoop = () => {
+    setCustomLoopNotes([]);
+  };
+
+  const randomizeCustomLoop = () => {
+    const count = Math.floor(Math.random() * 5) + 4; // 4 to 8 notes
+    const newLoop = [];
+    for (let i = 0; i < count; i++) {
+      const randomNote =
+        noteOptions[Math.floor(Math.random() * noteOptions.length)] + "4";
+      newLoop.push(randomNote);
+    }
+    setCustomLoopNotes(newLoop);
+  };
 
   // --- JSX Rendering ---
-  // Define relevance flags before return
   const isOscillatorRelevant = [
     "Synth",
     "AMSynth",
@@ -475,9 +461,9 @@ export default function Home() {
     <main className="min-h-screen bg-gray-950 text-gray-200 flex items-center justify-center p-4 font-sans">
       <div className="w-full max-w-4xl bg-gray-900 rounded-xl shadow-2xl p-6 md:p-8 border border-gray-700">
         {/* Header */}
-        <header>
-          <div className="flex items-center space-x-4 mb-6 border-b border-gray-700 pb-4">
-            <Music className="w-8 h-8 text-indigo-400 flex-shrink-0" />
+        <header className="mb-6 border-b border-gray-700 pb-4">
+          <div className="flex items-center space-x-4">
+            <Music className="w-8 h-8 text-indigo-400" />
             <div>
               <h1 className="text-2xl font-semibold text-gray-100">
                 AI MIDI Generator & Synth
@@ -495,42 +481,107 @@ export default function Home() {
             <textarea
               placeholder="Describe your song..."
               value={description}
-              onChange={(event) => setDescription(event.target.value)}
+              onChange={(e) => setDescription(e.target.value)}
               className="p-3 rounded-md bg-gray-700 text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-600 w-full resize-none transition"
               rows={3}
               disabled={isLoading}
             />
             <button
               type="submit"
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 px-5 rounded-md transition-colors duration-200 shadow-md w-full disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isLoading}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 px-5 rounded-md transition-colors shadow-md w-full disabled:opacity-50"
             >
               {isLoading ? "Generating..." : "Generate MIDI"}
             </button>
           </form>
         </section>
 
-        {/* Playback Controls, Visualization, and Settings */}
+        {/* Playback Controls & Custom Loop Editor */}
         <section className="bg-gray-800 rounded-lg p-5 border border-gray-700">
           <h2 className="text-xl font-semibold mb-4 text-white">
             Playback & Sound Design
           </h2>
-          {/* Single Toggle Button for Looping Playback */}
           <div className="flex flex-wrap gap-3 mb-5 border-b border-gray-700 pb-4">
             <button
               onClick={isLooping ? stopLoop : startLoop}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 px-5 rounded-md transition-colors duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!midiData?.length}
+              disabled={
+                !(
+                  (isCustomLoopActive && customLoopNotes.length > 0) ||
+                  (midiData && midiData.length > 0)
+                )
+              }
+              className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 px-5 rounded-md transition-colors shadow-md disabled:opacity-50"
             >
               {isLooping ? "Stop Loop" : "Start Loop"}
             </button>
             <button
+              onClick={() => setIsCustomLoopActive((prev) => !prev)}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 px-5 rounded-md transition-colors shadow-md"
+            >
+              {isCustomLoopActive ? "Hide Custom Loop" : "Custom Loop"}
+            </button>
+            <button
               onClick={randomizeSettings}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 px-5 rounded-md transition-colors duration-200 shadow-md"
+              className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 px-5 rounded-md transition-colors shadow-md"
             >
               Randomize
             </button>
           </div>
+
+          {/* Custom Loop Editor */}
+          {isCustomLoopActive && (
+            <div className="mb-6 p-4 bg-gray-800 border border-gray-700 rounded-lg">
+              <h3 className="text-lg font-semibold mb-3 text-white">
+                Custom Loop Editor
+              </h3>
+              <div className="grid grid-cols-6 gap-3 mb-4">
+                {noteOptions.map((note) => (
+                  <button
+                    key={note}
+                    onClick={() => addNote(note)}
+                    className="bg-indigo-700 hover:bg-indigo-600 text-white font-medium py-1 px-2 rounded-md transition-colors"
+                  >
+                    {note}4
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-3 mb-3">
+                <button
+                  onClick={randomizeCustomLoop}
+                  className="bg-green-600 hover:bg-green-500 text-white font-medium py-1 px-3 rounded-md transition-colors"
+                >
+                  Randomize Loop
+                </button>
+                <button
+                  onClick={clearCustomLoop}
+                  className="bg-red-600 hover:bg-red-500 text-white font-medium py-1 px-3 rounded-md transition-colors"
+                >
+                  Clear All
+                </button>
+              </div>
+              {customLoopNotes.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {customLoopNotes.map((note, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center bg-indigo-800 text-white px-3 py-1 rounded-full text-sm"
+                    >
+                      {note}
+                      <button
+                        onClick={() => removeNote(idx)}
+                        className="ml-2 text-red-400 hover:text-red-300"
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-400">No notes added yet.</p>
+              )}
+            </div>
+          )}
+
           {/* Waveform Canvas */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-400 mb-1">
@@ -543,7 +594,8 @@ export default function Home() {
               className="border border-gray-600 rounded-md bg-gray-950 w-full aspect-[6/1]"
             />
           </div>
-          {/* Synth Settings UI */}
+
+          {/* Synth Settings */}
           <div className="text-left">
             <h3 className="text-lg font-semibold mb-4 text-white">
               Sound Parameters
@@ -558,7 +610,7 @@ export default function Home() {
               <select
                 id="instrumentSelect"
                 value={selectedInstrument}
-                onChange={(event) => setSelectedInstrument(event.target.value)}
+                onChange={(e) => setSelectedInstrument(e.target.value)}
                 className="w-full rounded-md bg-gray-700 text-gray-200 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 px-3 py-2 transition"
               >
                 {instrumentOptions.map((opt) => (
@@ -583,7 +635,7 @@ export default function Home() {
                 <select
                   id="waveType"
                   value={waveType}
-                  onChange={(event) => setWaveType(event.target.value)}
+                  onChange={(e) => setWaveType(e.target.value)}
                   className="w-full rounded-md bg-gray-700 text-gray-200 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 px-3 py-2 disabled:cursor-not-allowed disabled:text-gray-500 transition"
                   disabled={!isOscillatorRelevant}
                   title={
@@ -612,9 +664,7 @@ export default function Home() {
                   max="20000"
                   step="10"
                   value={filterFrequency}
-                  onChange={(event) =>
-                    setFilterFrequency(Number(event.target.value))
-                  }
+                  onChange={(e) => setFilterFrequency(Number(e.target.value))}
                   className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer range-lg accent-indigo-500"
                 />
               </div>
@@ -636,7 +686,7 @@ export default function Home() {
                   max={1200}
                   step={100}
                   value={detune}
-                  onChange={(event) => setDetune(Number(event.target.value))}
+                  onChange={(e) => setDetune(Number(e.target.value))}
                   className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer range-lg accent-indigo-500 disabled:cursor-not-allowed disabled:accent-gray-500"
                   disabled={!isOscillatorRelevant}
                   title={
@@ -660,7 +710,7 @@ export default function Home() {
                   max="240"
                   step="1"
                   value={tempo}
-                  onChange={(event) => setTempo(Number(event.target.value))}
+                  onChange={(e) => setTempo(Number(e.target.value))}
                   className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer range-lg accent-indigo-500"
                 />
               </div>
@@ -678,9 +728,7 @@ export default function Home() {
                   max={1}
                   step={0.01}
                   value={modulationDepth}
-                  onChange={(event) =>
-                    setModulationDepth(Number(event.target.value))
-                  }
+                  onChange={(e) => setModulationDepth(Number(e.target.value))}
                   className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer range-lg accent-indigo-500"
                 />
               </div>
@@ -698,7 +746,7 @@ export default function Home() {
                   max={20}
                   step={0.1}
                   value={lfoSpeed}
-                  onChange={(event) => setLfoSpeed(Number(event.target.value))}
+                  onChange={(e) => setLfoSpeed(Number(e.target.value))}
                   className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer range-lg accent-indigo-500"
                 />
               </div>
@@ -733,7 +781,7 @@ export default function Home() {
                       max={max}
                       step={step}
                       value={value}
-                      onChange={(event) => setter(Number(event.target.value))}
+                      onChange={(e) => setter(Number(e.target.value))}
                       className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer range-lg accent-indigo-500 disabled:cursor-not-allowed disabled:accent-gray-500"
                       disabled={!isEnvelopeRelevant}
                       title={
