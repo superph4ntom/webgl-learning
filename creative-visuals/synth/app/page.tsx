@@ -34,6 +34,34 @@ const instrumentOptions = [
 const isMonophonicForPolySynth = (type: string): boolean =>
   type !== "PluckSynth";
 
+// A reusable note button that plays a preview on hover (once per hover)
+const NoteButton = ({
+  note,
+  onClick,
+  playPreview,
+}: {
+  note: string;
+  onClick: (note: string) => void;
+  playPreview: (note: string) => void;
+}) => {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      onMouseEnter={() => {
+        if (!hovered) {
+          playPreview(note + "4");
+          setHovered(true);
+        }
+      }}
+      onMouseLeave={() => setHovered(false)}
+      onClick={() => onClick(note + "4")}
+      className="bg-indigo-700 hover:bg-indigo-600 text-white font-medium py-1 px-2 rounded-md transition-colors"
+    >
+      {note}4
+    </button>
+  );
+};
+
 export default function Home() {
   // --- State Variables ---
   const [isLoading, setIsLoading] = useState(false);
@@ -221,7 +249,7 @@ export default function Home() {
     };
   }, [selectedInstrument]);
 
-  // Effect to Update Synth Parameters
+  // Effect to Update Synth Parameters (ADSR, WaveType, Detune)
   useEffect(() => {
     if (!synthRef.current) return;
     try {
@@ -241,7 +269,7 @@ export default function Home() {
           });
         }
       } else if (synthRef.current instanceof Tone.PluckSynth) {
-        // Not applicable.
+        // For PluckSynth, parameters are not directly mappable.
       }
     } catch (e) {
       console.error("Could not set some synth options:", e);
@@ -260,7 +288,7 @@ export default function Home() {
 
   // --- Core Logic Functions ---
 
-  // Waveform Visualization
+  // Waveform Visualization Function
   const animate = () => {
     if (animationRef.current === null) return;
     if (!analyserRef.current || !canvasRef.current) {
@@ -297,7 +325,7 @@ export default function Home() {
     animationRef.current = requestAnimationFrame(animate);
   };
 
-  // Form Submission Handler
+  // Form submission handler
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (isLoading) return;
@@ -329,7 +357,7 @@ export default function Home() {
     }
   }
 
-  // Extract Musical Notes
+  // Extract musical notes
   const extractABCNotes = (midiText: string): string[] => {
     if (!midiText || typeof midiText !== "string") return [];
     const notes = midiText.match(/[A-G][#b]?\d/gi);
@@ -337,7 +365,6 @@ export default function Home() {
   };
 
   // --- Playback Control Functions ---
-
   async function startLoop() {
     const loopNotes =
       isCustomLoopActive && customLoopNotes.length > 0
@@ -409,7 +436,6 @@ export default function Home() {
   }
 
   // --- Custom Loop Editor Functions ---
-
   const noteOptions = [
     "C",
     "C#",
@@ -425,8 +451,8 @@ export default function Home() {
     "B",
   ];
 
-  const addNote = (note: string) => {
-    setCustomLoopNotes((prev) => [...prev, note + "4"]);
+  const addNote = (noteWithOctave: string) => {
+    setCustomLoopNotes((prev) => [...prev, noteWithOctave]);
   };
 
   const removeNote = (index: number) => {
@@ -439,13 +465,20 @@ export default function Home() {
 
   const randomizeCustomLoop = () => {
     const count = Math.floor(Math.random() * 5) + 4; // 4 to 8 notes
-    const newLoop = [];
+    const newLoop: string[] = [];
     for (let i = 0; i < count; i++) {
       const randomNote =
         noteOptions[Math.floor(Math.random() * noteOptions.length)] + "4";
       newLoop.push(randomNote);
     }
     setCustomLoopNotes(newLoop);
+  };
+
+  // When hovering over a note, play its preview for one 16th note
+  const playPreview = (note: string) => {
+    if (synthRef.current) {
+      synthRef.current.triggerAttackRelease(note, "16n");
+    }
   };
 
   // --- JSX Rendering ---
@@ -536,13 +569,12 @@ export default function Home() {
               </h3>
               <div className="grid grid-cols-6 gap-3 mb-4">
                 {noteOptions.map((note) => (
-                  <button
+                  <NoteButton
                     key={note}
-                    onClick={() => addNote(note)}
-                    className="bg-indigo-700 hover:bg-indigo-600 text-white font-medium py-1 px-2 rounded-md transition-colors"
-                  >
-                    {note}4
-                  </button>
+                    note={note}
+                    onClick={addNote}
+                    playPreview={playPreview}
+                  />
                 ))}
               </div>
               <div className="flex items-center gap-3 mb-3">
