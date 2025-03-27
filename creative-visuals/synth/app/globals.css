@@ -1,0 +1,209 @@
+:root {
+  /* Dark Serum-like theme */
+  --primary-color: #ffffff;
+  --background-color: #1e1e1e;
+  --accent-color: #64ffda;
+  --text-color: #ffffff;
+  --border-radius: 6px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  background: var(--background-color);
+  color: var(--text-color);
+}
+
+.container {
+  min-height: 100vh;
+  padding: 2rem;
+  /* Dark gradient background similar to Serum’s panels */
+  background: linear-gradient(to bottom, #1e1e1e, #111111);
+}
+
+.content {
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.icon {
+  width: 4rem;
+  height: 4rem;
+  margin: 0 auto 1rem;
+  color: var(--accent-color);
+}
+
+.title {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.description {
+  color: #ccc;
+  margin-bottom: 2rem;
+  font-size: 1rem;
+}
+
+.card {
+  background: #2c2c2c;
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #444;
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  min-height: 120px;
+  resize: vertical;
+  background: #1a1a1a;
+  color: var(--text-color);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.button {
+  background: var(--accent-color);
+  color: #1e1e1e;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.button:hover:not(:disabled) {
+  background-color: #4fd8bd; /* slightly darker accent on hover */
+  transform: translateY(-1px);
+}
+
+.button:disabled {
+  background: #444;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.result-card {
+  background: #2c2c2c;
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.button-group {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.play-button,
+.stop-button {
+  flex: 1;
+  padding: 1rem 2rem;
+  border-radius: var(--border-radius);
+  font-size: 1.1rem;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.play-button {
+  background: var(--accent-color);
+  color: #1e1e1e;
+}
+
+.play-button:hover:not(:disabled) {
+  background-color: #4fd8bd;
+  transform: translateY(-1px);
+}
+
+.stop-button {
+  background: #f87171; /* a soft red tone */
+  color: #1e1e1e;
+}
+
+.stop-button:hover:not(:disabled) {
+  background-color: #f87171cc;
+  transform: translateY(-1px);
+}
+
+.controls {
+  background: #2c2c2c;
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  text-align: left;
+}
+
+.controls h2,
+.controls h3 {
+  color: var(--accent-color);
+  margin-top: 0;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.control-group label {
+  width: 140px;
+  font-weight: 600;
+  color: #ccc;
+}
+
+.control-group select,
+.control-group input[type="number"] {
+  padding: 0.5rem;
+  border: 1px solid #444;
+  border-radius: var(--border-radius);
+  background: #1a1a1a;
+  color: var(--text-color);
+  outline: none;
+  font-size: 1rem;
+}
+
+.control-group input[type="range"] {
+  flex: 1;
+  cursor: pointer;
+}
+
+.control-group span {
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+/* Canvas styling */
+canvas {
+  background: #1a1a1a;
+  border-radius: var(--border-radius);
+}
