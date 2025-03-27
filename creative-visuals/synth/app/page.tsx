@@ -1,6 +1,7 @@
 "use client";
 
 import { Music } from "lucide-react";
+import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { CONFIG } from "../data/config";
 
@@ -35,9 +36,13 @@ export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef(null);
 
-  // =========================
-  // 1) SETUP: Create Nodes Once
-  // =========================
+  const inputs = [
+    { label: "Attack", value: attack, setter: setAttack },
+    { label: "Decay", value: decay, setter: setDecay },
+    { label: "Sustain", value: sustain, setter: setSustain },
+    { label: "Release", value: release, setter: setRelease },
+  ];
+
   useEffect(() => {
     // Create the PolySynth with envelope and oscillator settings
     synthRef.current = new Tone.PolySynth(Tone.Synth, {
@@ -76,9 +81,6 @@ export default function Home() {
     };
   }, []);
 
-  // =========================
-  // 2) LIVE PARAM UPDATES
-  // =========================
   useEffect(() => {
     if (synthRef.current) {
       synthRef.current.set({
@@ -89,12 +91,9 @@ export default function Home() {
   }, [waveType, attack, decay, sustain, release]);
 
   useEffect(() => {
-    if (filterRef.current) {
-      filterRef.current.frequency.value = filterFrequency;
-    }
+    if (filterRef.current) filterRef.current.frequency.value = filterFrequency;
   }, [filterFrequency]);
 
-  // Update vibrato depth and frequency
   useEffect(() => {
     if (vibratoRef.current) {
       vibratoRef.current.set({
@@ -108,9 +107,6 @@ export default function Home() {
     Tone.Transport.bpm.value = tempo;
   }, [tempo]);
 
-  // =========================
-  // 3) ANIMATION / VISUALIZATION
-  // =========================
   const animate = () => {
     if (!analyserRef.current || !canvasRef.current) return;
 
@@ -139,11 +135,8 @@ export default function Home() {
     animationRef.current = requestAnimationFrame(animate);
   };
 
-  // =========================
-  // 4) DATA FETCH & PARSE
-  // =========================
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
     setIsLoading(true);
     try {
       const response = await fetch("/api/generate", {
@@ -161,7 +154,7 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }
 
   const extractABCNotes = (midiText: string): string[] =>
     midiText
@@ -171,10 +164,7 @@ export default function Home() {
       .split(/,\s*/)
       .filter((note) => /^[A-G][#b]?[0-9]$/.test(note));
 
-  // =========================
-  // 5) PLAYBACK CONTROLS
-  // =========================
-  const playMidi = async () => {
+  function playMidi() {
     if (isPlaying) return;
     setIsPlaying(true);
     animationRef.current = requestAnimationFrame(animate);
@@ -194,9 +184,9 @@ export default function Home() {
         stopMidi();
       }
     }, (time - now) * 1000);
-  };
+  }
 
-  const startLoop = () => {
+  function startLoop() {
     if (!loopRef.current) {
       let index = 0;
       loopRef.current = new Tone.Loop((time) => {
@@ -212,14 +202,14 @@ export default function Home() {
     setIsLooping(true);
     animationRef.current = requestAnimationFrame(animate);
     setIsPlaying(true);
-  };
+  }
 
-  const stopLoop = () => {
+  function stopLoop() {
     if (loopRef.current) loopRef.current.stop();
     setIsLooping(false);
-  };
+  }
 
-  const stopMidi = () => {
+  function stopMidi() {
     Tone.Transport.stop();
 
     if (animationRef.current) {
@@ -229,24 +219,24 @@ export default function Home() {
 
     if (isLooping) stopLoop();
     setIsPlaying(false);
-  };
+  }
 
-  const randomizeSettings = () => {
+  function randomizeSettings() {
     const waveTypes = ["sine", "square", "sawtooth", "triangle"];
     setWaveType(waveTypes[Math.floor(Math.random() * waveTypes.length)]);
-    setFilterFrequency(Math.floor(Math.random() * (2000 - 20 + 1)) + 20);
-    setAttack(Math.random());
-    setDecay(Math.random());
-    setSustain(Math.random());
-    setRelease(Math.random());
-    setModulationDepth(Math.random());
-    setLfoSpeed(parseFloat((Math.random() * (10 - 0.1) + 0.1).toFixed(1)));
-    setTempo(Math.floor(Math.random() * (200 - 40 + 1)) + 40);
-  };
 
-  // =========================
-  // 6) RENDER COMPONENT
-  // =========================
+    const random = () => parseFloat(Math.random().toFixed(2));
+
+    setFilterFrequency(Math.floor(Math.random() * 1981) + 20);
+    setAttack(random());
+    setDecay(random());
+    setSustain(random());
+    setRelease(random());
+    setModulationDepth(random());
+    setLfoSpeed(parseFloat((Math.random() * 9.9 + 0.1).toFixed(1)));
+    setTempo(Math.floor(Math.random() * 161) + 40);
+  }
+
   return (
     <main className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
       <div className="w-full max-w-4xl bg-gray-800 rounded-lg shadow-lg p-6">
@@ -264,9 +254,9 @@ export default function Home() {
         <section className="bg-gray-700 rounded-md p-4 mt-6">
           <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
             <textarea
-              placeholder="Describe your song (e.g., 'A gentle piano melody with a soft jazz feel')"
+              placeholder="Describe your song (event.g., 'A gentle piano melody with a soft jazz feel')"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(event) => setDescription(event.target.value)}
               className="p-2 rounded-md bg-gray-600 text-white focus:outline-none"
             />
             <button
@@ -336,7 +326,7 @@ export default function Home() {
                 <select
                   id="waveType"
                   value={waveType}
-                  onChange={(e) => setWaveType(e.target.value)}
+                  onChange={(event) => setWaveType(event.target.value)}
                   className="w-full p-2 rounded-md bg-gray-600 text-white"
                 >
                   <option value="sine">Sine</option>
@@ -356,7 +346,9 @@ export default function Home() {
                   min="20"
                   max="2000"
                   value={filterFrequency}
-                  onChange={(e) => setFilterFrequency(Number(e.target.value))}
+                  onChange={(event) =>
+                    setFilterFrequency(Number(event.target.value))
+                  }
                   className="w-full"
                 />
                 <span>{filterFrequency} Hz</span>
@@ -365,12 +357,7 @@ export default function Home() {
 
             <h3 className="mt-6 text-lg font-semibold">Envelope Settings</h3>
             <div className="grid grid-cols-2 gap-4 mt-4">
-              {[
-                { label: "Attack", value: attack, setter: setAttack },
-                { label: "Decay", value: decay, setter: setDecay },
-                { label: "Sustain", value: sustain, setter: setSustain },
-                { label: "Release", value: release, setter: setRelease },
-              ].map(({ label, value, setter }) => (
+              {inputs.map(({ label, value, setter }) => (
                 <div key={label} className="space-y-2">
                   <label htmlFor={label} className="block">
                     {label}
@@ -382,7 +369,7 @@ export default function Home() {
                     max="1"
                     step="0.01"
                     value={value}
-                    onChange={(e) => setter(Number(e.target.value))}
+                    onChange={(event) => setter(Number(event.target.value))}
                     className="w-full"
                   />
                   <span>{value}</span>
@@ -403,7 +390,9 @@ export default function Home() {
                   max="1"
                   step="0.01"
                   value={modulationDepth}
-                  onChange={(e) => setModulationDepth(Number(e.target.value))}
+                  onChange={(event) =>
+                    setModulationDepth(Number(event.target.value))
+                  }
                   className="w-full"
                 />
                 <span>{modulationDepth}</span>
@@ -419,7 +408,7 @@ export default function Home() {
                   max="10"
                   step="0.1"
                   value={lfoSpeed}
-                  onChange={(e) => setLfoSpeed(Number(e.target.value))}
+                  onChange={(event) => setLfoSpeed(Number(event.target.value))}
                   className="w-full"
                 />
                 <span>{lfoSpeed} Hz</span>
@@ -435,7 +424,7 @@ export default function Home() {
                 id="tempo"
                 type="number"
                 value={tempo}
-                onChange={(e) => setTempo(Number(e.target.value))}
+                onChange={(event) => setTempo(Number(event.target.value))}
                 className="w-full p-2 rounded-md bg-gray-600 text-white"
               />
             </div>
